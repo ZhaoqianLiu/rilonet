@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -64,7 +63,9 @@ def generate_simulation_dataset(
     }
     unknown_omics = set(observation_probability) - set(OMICS)
     if unknown_omics:
-        raise ValueError(f"Unknown omics in observation_probabilities: {sorted(unknown_omics)}")
+        raise ValueError(
+            f"Unknown omics in observation_probabilities: {sorted(unknown_omics)}"
+        )
     observation_probability = {
         omic: float(observation_probability[omic]) for omic in OMICS
     }
@@ -75,7 +76,9 @@ def generate_simulation_dataset(
         raise ValueError("Each observation probability must be in (0, 1]")
     dimensions = dimensions or {"MG": 16, "MT": 20, "MB": 12}
     if any(dimensions.get(omic, 0) < 6 for omic in OMICS):
-        raise ValueError("Each omics layer needs at least six features for the default truth design")
+        raise ValueError(
+            "Each omics layer needs at least six features for the default truth design"
+        )
     names = _feature_names(dimensions)
     offsets: dict[str, int] = {}
     total = 0
@@ -182,16 +185,34 @@ def generate_simulation_dataset(
 
         for visit in range(n_visits):
             innovations = rng.normal(0, innovation_sd, size=total)
-            for x_omic, xi, y_omic, yi, _, reference_loading, condition_loading in near_edges:
+            for (
+                x_omic,
+                xi,
+                y_omic,
+                yi,
+                _,
+                reference_loading,
+                condition_loading,
+            ) in near_edges:
                 shock = rng.normal()
                 target_loading = condition_loading if group_index else reference_loading
                 innovations[index(x_omic, xi)] += 0.70 * shock
                 innovations[index(y_omic, yi)] += target_loading * shock
             previous = latent[visit - 1] if visit else intercept
             latent[visit] = intercept + 0.40 * (previous - intercept) + innovations
-            latent[visit] += (visit / max(n_visits - 1, 1)) * rng.normal(0, 0.15, size=total)
+            latent[visit] += (visit / max(n_visits - 1, 1)) * rng.normal(
+                0, 0.15, size=total
+            )
             if visit >= 3:
-                for x_omic, xi, y_omic, yi, _, reference_beta, condition_beta in lag_edges:
+                for (
+                    x_omic,
+                    xi,
+                    y_omic,
+                    yi,
+                    _,
+                    reference_beta,
+                    condition_beta,
+                ) in lag_edges:
                     beta = condition_beta if group_index else reference_beta
                     source_index = index(x_omic, xi)
                     target_index = index(y_omic, yi)
@@ -241,7 +262,9 @@ def generate_simulation_dataset(
     pd.DataFrame(metadata_rows).to_csv(metadata_path, sep="\t", index=False)
     matrix_paths = {}
     for omic in OMICS:
-        frame = pd.DataFrame(matrices[omic], index=matrix_ids[omic], columns=names[omic])
+        frame = pd.DataFrame(
+            matrices[omic], index=matrix_ids[omic], columns=names[omic]
+        )
         frame.index.name = "sample_id"
         path = data_dir / f"{omic}.tsv"
         frame.to_csv(path, sep="\t")
@@ -325,7 +348,9 @@ def generate_simulation_dataset(
         },
         "matching": {
             "near_tolerance_days": 7,
-            "lag_windows": [{"name": "lag_4_8w", "min_days": 28, "max_days": 56, "target_days": 42}],
+            "lag_windows": [
+                {"name": "lag_4_8w", "min_days": 28, "max_days": 56, "target_days": 42}
+            ],
             "baseline_lookback_days": 28,
         },
         "screening": {

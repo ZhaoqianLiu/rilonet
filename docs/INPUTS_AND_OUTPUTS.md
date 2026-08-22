@@ -56,7 +56,7 @@ analysis/
 ├── 01_prepared/
 │   ├── matrices/{MG,MT,MB}.parquet
 │   ├── sample_manifest.tsv
-│   └── preprocessing_qc.json
+│   └── preparation_qc.json
 ├── 02_residuals/
 │   ├── {MG,MT,MB}_residuals.parquet
 │   ├── *_fit_diagnostics.tsv

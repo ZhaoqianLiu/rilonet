@@ -42,12 +42,17 @@ def _full_rank(frame: pd.DataFrame) -> pd.DataFrame:
     keep = [
         column
         for column in frame
-        if column == "Intercept" or float(np.nanstd(frame[column].to_numpy(dtype=float))) > 0
+        if column == "Intercept"
+        or float(np.nanstd(frame[column].to_numpy(dtype=float))) > 0
     ]
     frame = frame[keep]
     _, r, pivot = qr(frame.to_numpy(dtype=float), mode="economic", pivoting=True)
     diagonal = np.abs(np.diag(r))
-    tolerance = max(frame.shape) * np.finfo(float).eps * (diagonal.max() if diagonal.size else 0.0)
+    tolerance = (
+        max(frame.shape)
+        * np.finfo(float).eps
+        * (diagonal.max() if diagonal.size else 0.0)
+    )
     rank = int((diagonal > tolerance).sum())
     chosen = sorted(pivot[:rank])
     result = frame.iloc[:, chosen]
@@ -57,7 +62,9 @@ def _full_rank(frame: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
-def build_design(manifest: pd.DataFrame, config: dict[str, Any]) -> tuple[pd.DataFrame, dict[str, Any]]:
+def build_design(
+    manifest: pd.DataFrame, config: dict[str, Any]
+) -> tuple[pd.DataFrame, dict[str, Any]]:
     _, patsy = _dependencies()
     cfg = config["residualization"]
     design = pd.DataFrame({"Intercept": 1.0}, index=manifest.index)
@@ -89,7 +96,9 @@ def build_design(manifest: pd.DataFrame, config: dict[str, Any]) -> tuple[pd.Dat
 
     for column in categorical_covariates(config):
         values = manifest[column].fillna("Missing").astype(str).replace("", "Missing")
-        dummies = pd.get_dummies(values, prefix=f"cat_{column}", drop_first=True, dtype=float)
+        dummies = pd.get_dummies(
+            values, prefix=f"cat_{column}", drop_first=True, dtype=float
+        )
         design = pd.concat([design, dummies], axis=1)
         imputation[column] = "Missing"
 
@@ -105,8 +114,12 @@ def build_design(manifest: pd.DataFrame, config: dict[str, Any]) -> tuple[pd.Dat
     return design, {"columns": list(design.columns), "imputation": imputation}
 
 
-def _subject_fixed_effect_residuals(y: np.ndarray, x: np.ndarray, groups: np.ndarray) -> np.ndarray:
-    dummies = pd.get_dummies(pd.Series(groups, dtype=str), drop_first=True, dtype=float).to_numpy()
+def _subject_fixed_effect_residuals(
+    y: np.ndarray, x: np.ndarray, groups: np.ndarray
+) -> np.ndarray:
+    dummies = pd.get_dummies(
+        pd.Series(groups, dtype=str), drop_first=True, dtype=float
+    ).to_numpy()
     augmented = np.column_stack([x, dummies]) if dummies.size else x
     coefficients, *_ = np.linalg.lstsq(augmented, y, rcond=None)
     return y - augmented @ coefficients
@@ -131,7 +144,9 @@ def _fit_feature(
         "converged": False,
         "error": "",
     }
-    if len(y) < int(cfg["min_observations"]) or pd.unique(groups).size < int(cfg["min_subjects"]):
+    if len(y) < int(cfg["min_observations"]) or pd.unique(groups).size < int(
+        cfg["min_subjects"]
+    ):
         diagnostics["error"] = "insufficient_observations_or_subjects"
         return result, diagnostics
     if np.nanstd(y, ddof=1) <= 0:
@@ -152,7 +167,10 @@ def _fit_feature(
             fixed = x @ np.asarray(fit.fe_params, dtype=float)
             random = fit.random_effects
             fitted = fixed + np.asarray(
-                [float(np.ravel(np.asarray(random[group], dtype=float))[0]) for group in groups]
+                [
+                    float(np.ravel(np.asarray(random[group], dtype=float))[0])
+                    for group in groups
+                ]
             )
             residual = y - fitted
             result[finite] = residual
@@ -180,7 +198,9 @@ def _fit_feature(
             }
         )
     except Exception as exc:
-        diagnostics["error"] = ";".join(errors) + f";fallback:{type(exc).__name__}:{exc}"
+        diagnostics["error"] = (
+            ";".join(errors) + f";fallback:{type(exc).__name__}:{exc}"
+        )
     return result, diagnostics
 
 
@@ -199,7 +219,9 @@ def _initialize_residual_worker(
     )
 
 
-def _residualize_feature(index: int) -> tuple[int, np.ndarray, np.ndarray, dict[str, Any], float, float]:
+def _residualize_feature(
+    index: int,
+) -> tuple[int, np.ndarray, np.ndarray, dict[str, Any], float, float]:
     residual, diagnostics = _fit_feature(
         _RESIDUAL_WORKER_STATE["values"][:, index],
         _RESIDUAL_WORKER_STATE["design"],
@@ -255,12 +277,16 @@ def residualize_omic(
         )
 
     try:
-        for completed, (column_index, residual, z, diagnostics, mean, sd) in enumerate(fitted, 1):
+        for completed, (column_index, residual, z, diagnostics, mean, sd) in enumerate(
+            fitted, 1
+        ):
             feature = matrix.columns[column_index]
             raw_values[:, column_index] = residual
             standardized_values[:, column_index] = z
             diagnostics_rows.append({"omic": omic, "feature": feature, **diagnostics})
-            scaling_rows.append({"omic": omic, "feature": feature, "mean": mean, "sd": sd})
+            scaling_rows.append(
+                {"omic": omic, "feature": feature, "mean": mean, "sd": sd}
+            )
             if completed % 100 == 0 or completed == matrix.shape[1]:
                 print(
                     f"[{omic}] residualized {completed}/{matrix.shape[1]} "
@@ -272,12 +298,18 @@ def residualize_omic(
             executor.shutdown()
 
     raw = pd.DataFrame(raw_values, index=matrix.index, columns=matrix.columns)
-    standardized = pd.DataFrame(standardized_values, index=matrix.index, columns=matrix.columns)
+    standardized = pd.DataFrame(
+        standardized_values, index=matrix.index, columns=matrix.columns
+    )
     raw.to_parquet(output_dir / f"{omic}_raw_residuals.parquet")
     standardized.to_parquet(output_dir / f"{omic}_residuals.parquet")
     diagnostics = pd.DataFrame(diagnostics_rows)
-    diagnostics.to_csv(output_dir / f"{omic}_fit_diagnostics.tsv", sep="\t", index=False)
-    pd.DataFrame(scaling_rows).to_csv(output_dir / f"{omic}_scaling.tsv", sep="\t", index=False)
+    diagnostics.to_csv(
+        output_dir / f"{omic}_fit_diagnostics.tsv", sep="\t", index=False
+    )
+    pd.DataFrame(scaling_rows).to_csv(
+        output_dir / f"{omic}_scaling.tsv", sep="\t", index=False
+    )
     write_json(design_info, output_dir / f"{omic}_design.json")
     return standardized, diagnostics
 

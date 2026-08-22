@@ -37,9 +37,11 @@ def _z(values: pd.Series | np.ndarray) -> np.ndarray:
 
 def _near_association_method(config: dict[str, Any]) -> str:
     """Return the normalized near-synchronous association method."""
-    value = str(
-        config.get("modeling", {}).get("near_association_method", "max_p")
-    ).strip().lower()
+    value = (
+        str(config.get("modeling", {}).get("near_association_method", "max_p"))
+        .strip()
+        .lower()
+    )
     aliases = {
         "max_p": "max_p",
         "combined_max_p": "max_p",
@@ -48,8 +50,7 @@ def _near_association_method(config: dict[str, Any]) -> str:
     }
     if value not in aliases:
         raise ValueError(
-            "modeling.near_association_method must be max_p or "
-            "symmetric_fisher_z"
+            "modeling.near_association_method must be max_p or " "symmetric_fisher_z"
         )
     return aliases[value]
 
@@ -65,13 +66,17 @@ def prepare_edge_frame(
     reverse: bool = False,
 ) -> pd.DataFrame:
     work = pairs.copy()
-    exists = work["x_sample_id"].astype(str).isin(x_matrix.index) & work["y_sample_id"].astype(str).isin(y_matrix.index)
+    exists = work["x_sample_id"].astype(str).isin(x_matrix.index) & work[
+        "y_sample_id"
+    ].astype(str).isin(y_matrix.index)
     work = work[exists].copy()
     x_ids = work["x_sample_id"].astype(str)
     y_ids = work["y_sample_id"].astype(str)
     if reverse:
         if analysis_type != "near":
-            raise ValueError("Reverse orientation is defined only for near-contemporaneous pairs")
+            raise ValueError(
+                "Reverse orientation is defined only for near-contemporaneous pairs"
+            )
         work["predictor"] = y_matrix.loc[y_ids, y_feature].to_numpy(dtype=float)
         work["outcome_raw"] = x_matrix.loc[x_ids, x_feature].to_numpy(dtype=float)
     else:
@@ -81,8 +86,12 @@ def prepare_edge_frame(
     if analysis_type == "lagged" and baseline_mode in {"adjust", "change"}:
         work = work[work["has_baseline"].astype(str).str.lower().eq("true")].copy()
         lookup = y_matrix[y_feature]
-        work["baseline_outcome_raw"] = work["baseline_sample_id"].astype(str).map(lookup)
-        work = work[np.isfinite(pd.to_numeric(work["baseline_outcome_raw"], errors="coerce"))].copy()
+        work["baseline_outcome_raw"] = (
+            work["baseline_sample_id"].astype(str).map(lookup)
+        )
+        work = work[
+            np.isfinite(pd.to_numeric(work["baseline_outcome_raw"], errors="coerce"))
+        ].copy()
         if baseline_mode == "change":
             work["outcome_raw"] = work["outcome_raw"] - work["baseline_outcome_raw"]
 
@@ -137,8 +146,15 @@ def make_design(
     # Near-contemporaneous covariates remain anchored to the canonical x side
     # when the molecular orientation is reversed; lagged covariates are source-side.
     for column in categorical_covariates(config):
-        values = frame[f"x_cov__{column}"].fillna("Missing").astype(str).replace("", "Missing")
-        dummies = pd.get_dummies(values, prefix=f"cov_{column}", drop_first=True, dtype=float)
+        values = (
+            frame[f"x_cov__{column}"]
+            .fillna("Missing")
+            .astype(str)
+            .replace("", "Missing")
+        )
+        dummies = pd.get_dummies(
+            values, prefix=f"cov_{column}", drop_first=True, dtype=float
+        )
         design = pd.concat([design, dummies], axis=1)
     for column in numeric_covariates(config):
         values = pd.to_numeric(frame[f"x_cov__{column}"], errors="coerce")
@@ -174,7 +190,9 @@ def _fit_model(
                     disp=False,
                 )
             beta = np.asarray(fit.fe_params, dtype=float)
-            covariance = np.asarray(fit.cov_params(), dtype=float)[: len(beta), : len(beta)]
+            covariance = np.asarray(fit.cov_params(), dtype=float)[
+                : len(beta), : len(beta)
+            ]
             finite = np.isfinite(beta).all() and np.isfinite(covariance).all()
             if finite and bool(fit.converged):
                 diagnostics.update(
@@ -182,7 +200,9 @@ def _fit_model(
                         "method": "mixedlm_random_intercept",
                         "optimizer": optimizer,
                         "converged": bool(fit.converged),
-                        "random_intercept_variance": float(np.asarray(fit.cov_re)[0, 0]),
+                        "random_intercept_variance": float(
+                            np.asarray(fit.cov_re)[0, 0]
+                        ),
                         "error": ";".join(errors),
                     }
                 )
@@ -205,10 +225,14 @@ def _fit_model(
         )
         return np.asarray(fit.params), np.asarray(fit.cov_params()), diagnostics
     except Exception as exc:
-        raise RuntimeError(";".join(errors) + f";ols:{type(exc).__name__}:{exc}") from exc
+        raise RuntimeError(
+            ";".join(errors) + f";ols:{type(exc).__name__}:{exc}"
+        ) from exc
 
 
-def _contrast(beta: np.ndarray, covariance: np.ndarray, vector: np.ndarray) -> tuple[float, float, float]:
+def _contrast(
+    beta: np.ndarray, covariance: np.ndarray, vector: np.ndarray
+) -> tuple[float, float, float]:
     estimate = float(vector @ beta)
     variance = float(vector @ covariance @ vector)
     se = float(np.sqrt(max(variance, 0.0)))
@@ -233,7 +257,9 @@ def fit_edge_frame(
     condition = next(level for level in levels if level != reference)
     cfg = config["modeling"]
     counts = frame.groupby("group")["subject_id"].nunique()
-    if len(frame) < int(cfg["min_pairs"]) or frame["subject_id"].nunique() < int(cfg["min_subjects"]):
+    if len(frame) < int(cfg["min_pairs"]) or frame["subject_id"].nunique() < int(
+        cfg["min_subjects"]
+    ):
         raise RuntimeError("insufficient_pairs_or_subjects")
     for level in levels:
         if int(counts.get(level, 0)) < int(cfg["min_subjects_per_group"]):
@@ -305,9 +331,7 @@ def fit_symmetric_near_frame(
     condition = next(level for level in levels if level != reference)
     cfg = config["modeling"]
 
-    work = frame[
-        ["subject_id", "group", "predictor", "outcome_raw"]
-    ].copy()
+    work = frame[["subject_id", "group", "predictor", "outcome_raw"]].copy()
     work["subject_id"] = work["subject_id"].astype(str)
     work["group"] = work["group"].astype(str)
     work["predictor"] = pd.to_numeric(work["predictor"], errors="coerce")
@@ -316,41 +340,33 @@ def fit_symmetric_near_frame(
     work = work[finite].copy()
 
     counts = work.groupby("group")["subject_id"].nunique()
-    if (
-        len(work) < int(cfg["min_pairs"])
-        or work["subject_id"].nunique() < int(cfg["min_subjects"])
+    if len(work) < int(cfg["min_pairs"]) or work["subject_id"].nunique() < int(
+        cfg["min_subjects"]
     ):
         raise RuntimeError("insufficient_pairs_or_subjects")
     for level in levels:
         if int(counts.get(level, 0)) < int(cfg["min_subjects_per_group"]):
             raise RuntimeError(f"insufficient_subjects_in_{level}")
 
-    work["x_within"] = (
-        work["predictor"]
-        - work.groupby("subject_id")["predictor"].transform("mean")
-    )
-    work["y_within"] = (
-        work["outcome_raw"]
-        - work.groupby("subject_id")["outcome_raw"].transform("mean")
-    )
+    work["x_within"] = work["predictor"] - work.groupby("subject_id")[
+        "predictor"
+    ].transform("mean")
+    work["y_within"] = work["outcome_raw"] - work.groupby("subject_id")[
+        "outcome_raw"
+    ].transform("mean")
     work["x2"] = work["x_within"] ** 2
     work["y2"] = work["y_within"] ** 2
     work["xy"] = work["x_within"] * work["y_within"]
-    subject_stats = (
-        work.groupby(["group", "subject_id"], as_index=False)[
-            ["x2", "y2", "xy"]
-        ]
-        .sum()
-    )
+    subject_stats = work.groupby(["group", "subject_id"], as_index=False)[
+        ["x2", "y2", "xy"]
+    ].sum()
 
     effects: dict[str, float] = {}
     variances: dict[str, float] = {}
     for level in levels:
         group_stats = subject_stats[subject_stats["group"].eq(level)].copy()
         if len(group_stats) < 3:
-            raise RuntimeError(
-                f"insufficient_subjects_for_symmetric_near_{level}"
-            )
+            raise RuntimeError(f"insufficient_subjects_for_symmetric_near_{level}")
         total = group_stats[["x2", "y2", "xy"]].sum()
         effect = _fisher_z_from_centered_sums(
             float(total["x2"]),
@@ -367,8 +383,10 @@ def fit_symmetric_near_frame(
                 )
             )
         deleted = np.asarray(leave_one, dtype=float)
-        variance = (len(deleted) - 1) / len(deleted) * float(
-            np.sum((deleted - deleted.mean()) ** 2)
+        variance = (
+            (len(deleted) - 1)
+            / len(deleted)
+            * float(np.sum((deleted - deleted.mean()) ** 2))
         )
         effects[level] = effect
         variances[level] = max(variance, 0.0)
@@ -377,18 +395,14 @@ def fit_symmetric_near_frame(
     contrast_variance = variances[condition] + variances[reference]
     contrast_se = float(np.sqrt(max(contrast_variance, 0.0)))
     contrast_p = (
-        normal_two_sided_p(contrast / contrast_se)
-        if contrast_se > 0
-        else np.nan
+        normal_two_sided_p(contrast / contrast_se) if contrast_se > 0 else np.nan
     )
 
     rows = []
     for level in levels:
         effect_se = float(np.sqrt(variances[level]))
         effect_p = (
-            normal_two_sided_p(effects[level] / effect_se)
-            if effect_se > 0
-            else np.nan
+            normal_two_sided_p(effects[level] / effect_se) if effect_se > 0 else np.nan
         )
         rows.append(
             {
@@ -396,15 +410,9 @@ def fit_symmetric_near_frame(
                 "effect": effects[level],
                 "effect_se": effect_se,
                 "effect_p": effect_p,
-                "contrast_vs_reference": (
-                    contrast if level == condition else 0.0
-                ),
-                "contrast_se": (
-                    contrast_se if level == condition else np.nan
-                ),
-                "contrast_p": (
-                    contrast_p if level == condition else np.nan
-                ),
+                "contrast_vs_reference": (contrast if level == condition else 0.0),
+                "contrast_se": (contrast_se if level == condition else np.nan),
+                "contrast_p": (contrast_p if level == condition else np.nan),
                 "n_pairs_model": int(len(work)),
                 "n_subjects_model": int(work["subject_id"].nunique()),
                 "n_subjects_group": int(counts.get(level, 0)),
@@ -445,9 +453,7 @@ def fit_candidate_file(
     if candidates.empty:
         return pd.DataFrame(), pd.DataFrame()
     analysis_type = str(candidates["analysis_type"].iloc[0])
-    effective_baseline_mode = (
-        "none" if analysis_type == "near" else baseline_mode
-    )
+    effective_baseline_mode = "none" if analysis_type == "near" else baseline_mode
     x_omic = str(candidates["x_omic"].iloc[0])
     y_omic = str(candidates["y_omic"].iloc[0])
     pairs = pd.read_csv(_pair_path(config, candidates), sep="\t", low_memory=False)
@@ -476,18 +482,21 @@ def fit_candidate_file(
             if analysis_type == "near"
             else "directional_lmm"
         )
-        reverse_options = [False, True] if (
-            analysis_type == "near"
-            and near_method == "max_p"
-            and bool(config["modeling"].get("near_fit_both_orientations", True))
-        ) else [False]
+        reverse_options = (
+            [False, True]
+            if (
+                analysis_type == "near"
+                and near_method == "max_p"
+                and bool(config["modeling"].get("near_fit_both_orientations", True))
+            )
+            else [False]
+        )
         fitted_directions = []
         failed = False
         for reverse in reverse_options:
             label = (
                 "symmetric"
-                if analysis_type == "near"
-                and near_method == "symmetric_fisher_z"
+                if analysis_type == "near" and near_method == "symmetric_fisher_z"
                 else ("reverse" if reverse else "forward")
             )
             try:
@@ -506,7 +515,13 @@ def fit_candidate_file(
                 )
                 fitted_directions.append(fitted.set_index("group"))
                 diagnostics_rows.append(
-                    {"edge_id": edge_id, "orientation": label, "status": "ok", "error": "", **diagnostics}
+                    {
+                        "edge_id": edge_id,
+                        "orientation": label,
+                        "status": "ok",
+                        "error": "",
+                        **diagnostics,
+                    }
                 )
             except Exception as exc:
                 failed = True
@@ -526,11 +541,15 @@ def fit_candidate_file(
             for column in ("effect", "contrast_vs_reference"):
                 combined[column] = (combined[column] + reverse[column]) / 2.0
             combined["effect_p"] = np.maximum(combined["effect_p"], reverse["effect_p"])
-            combined["contrast_p"] = np.maximum(combined["contrast_p"], reverse["contrast_p"])
-            edge_sign_consistent = bool((
-                np.sign(fitted_directions[0]["contrast_vs_reference"])
-                == np.sign(reverse["contrast_vs_reference"])
-            ).all())
+            combined["contrast_p"] = np.maximum(
+                combined["contrast_p"], reverse["contrast_p"]
+            )
+            edge_sign_consistent = bool(
+                (
+                    np.sign(fitted_directions[0]["contrast_vs_reference"])
+                    == np.sign(reverse["contrast_vs_reference"])
+                ).all()
+            )
         else:
             edge_sign_consistent = True
         combined["sign_consistent"] = edge_sign_consistent
@@ -562,9 +581,7 @@ def fit_candidate_file(
                     "contrast_vs_reference": row["contrast_vs_reference"],
                     "contrast_p": row["contrast_p"],
                     "sign_consistent": row["sign_consistent"],
-                    "primary_network_eligible": row[
-                        "primary_network_eligible"
-                    ],
+                    "primary_network_eligible": row["primary_network_eligible"],
                     "n_pairs_model": row["n_pairs_model"],
                     "n_subjects_model": row["n_subjects_model"],
                     "fit_method": row["fit_method"],
@@ -572,7 +589,10 @@ def fit_candidate_file(
                 }
             )
         if (edge_index + 1) % 100 == 0 or edge_index + 1 == len(candidates):
-            print(f"[{candidate_path.stem}] modeled {edge_index + 1}/{len(candidates)}", flush=True)
+            print(
+                f"[{candidate_path.stem}] modeled {edge_index + 1}/{len(candidates)}",
+                flush=True,
+            )
 
     results = pd.DataFrame(results_rows)
     if not results.empty:
@@ -584,7 +604,9 @@ def fit_candidate_file(
             for level in config["metadata"]["group_levels"]
             if level != config["metadata"]["reference_group"]
         )
-        condition_rows = results[results["group"].eq(condition)].drop_duplicates("edge_id")
+        condition_rows = results[results["group"].eq(condition)].drop_duplicates(
+            "edge_id"
+        )
         qvalues = bh_fdr(condition_rows["contrast_p"])
         contrast_map = dict(zip(condition_rows["edge_id"], qvalues))
         results["contrast_q_block"] = results["edge_id"].map(contrast_map)
@@ -680,7 +702,9 @@ def _model_candidate_path(candidate_path: str) -> tuple[str, dict[str, Any]]:
     )
     output_dir = _MODEL_WORKER_STATE["output_dir"]
     results.to_csv(output_dir / f"{path.stem}_edges.tsv", sep="\t", index=False)
-    diagnostics.to_csv(output_dir / f"{path.stem}_fit_diagnostics.tsv", sep="\t", index=False)
+    diagnostics.to_csv(
+        output_dir / f"{path.stem}_fit_diagnostics.tsv", sep="\t", index=False
+    )
     effective_modes = (
         sorted(results["baseline_mode"].dropna().astype(str).unique())
         if "baseline_mode" in results
@@ -688,9 +712,13 @@ def _model_candidate_path(candidate_path: str) -> tuple[str, dict[str, Any]]:
     )
     report = {
         "candidate_edges": int(total),
-        "unique_edges_fitted": int(results["edge_id"].nunique()) if not results.empty else 0,
+        "unique_edges_fitted": int(results["edge_id"].nunique())
+        if not results.empty
+        else 0,
         "failed_orientation_fits": (
-            int((diagnostics["status"] == "failed").sum()) if not diagnostics.empty else 0
+            int((diagnostics["status"] == "failed").sum())
+            if not diagnostics.empty
+            else 0
         ),
         "baseline_mode": (
             effective_modes[0]
@@ -720,9 +748,7 @@ def _reuse_near_result(
 
     requested_method = _near_association_method(config)
     if "near_association_method" in frame:
-        observed_methods = set(
-            frame["near_association_method"].dropna().astype(str)
-        )
+        observed_methods = set(frame["near_association_method"].dropna().astype(str))
         observed_method = (
             next(iter(observed_methods)) if len(observed_methods) == 1 else ""
         )
@@ -738,9 +764,7 @@ def _reuse_near_result(
     frame["baseline_mode"] = "none"
     frame["near_association_method"] = requested_method
     frame["effect_scale"] = (
-        "fisher_z"
-        if requested_method == "symmetric_fisher_z"
-        else "standardized_slope"
+        "fisher_z" if requested_method == "symmetric_fisher_z" else "standardized_slope"
     )
     if "sign_consistent" not in frame:
         frame["sign_consistent"] = True
@@ -761,17 +785,13 @@ def _reuse_near_result(
         index=False,
     )
 
-    diagnostics_source = (
-        source_dir / f"{candidate_path.stem}_fit_diagnostics.tsv"
-    )
+    diagnostics_source = source_dir / f"{candidate_path.stem}_fit_diagnostics.tsv"
     if diagnostics_source.exists():
         shutil.copy2(
             diagnostics_source,
             output_dir / diagnostics_source.name,
         )
-    candidate_edges = len(
-        pd.read_csv(candidate_path, sep="\t", usecols=["x_feature"])
-    )
+    candidate_edges = len(pd.read_csv(candidate_path, sep="\t", usecols=["x_feature"]))
     return {
         "candidate_edges": int(candidate_edges),
         "unique_edges_fitted": int(frame["edge_id"].nunique()),

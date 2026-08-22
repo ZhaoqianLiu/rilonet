@@ -53,7 +53,9 @@ def _edge_key(
     )
 
 
-def _truth_keys(truth: pd.DataFrame, differential_only: bool) -> set[tuple[str, str, str, str, str]]:
+def _truth_keys(
+    truth: pd.DataFrame, differential_only: bool
+) -> set[tuple[str, str, str, str, str]]:
     subset = truth.copy()
     if differential_only:
         subset = subset[subset["is_differential"].astype(str).str.lower().eq("true")]
@@ -106,7 +108,9 @@ def _called_keys(
         if frame.empty:
             continue
         frame = frame[frame["group"].astype(str).eq(condition_group)].copy()
-        frame = frame[pd.to_numeric(frame["contrast_q"], errors="coerce") <= q_threshold]
+        frame = frame[
+            pd.to_numeric(frame["contrast_q"], errors="coerce") <= q_threshold
+        ]
         for row in frame.itertuples(index=False):
             result.add(
                 _edge_key(
@@ -134,7 +138,9 @@ def _network_metrics(
     )
     if analysis_type is not None:
         planted = {edge for edge in planted if edge[0] == analysis_type}
-        truth_differential = {edge for edge in truth_differential if edge[0] == analysis_type}
+        truth_differential = {
+            edge for edge in truth_differential if edge[0] == analysis_type
+        }
         candidates = {edge for edge in candidates if edge[0] == analysis_type}
         called = {edge for edge in called if edge[0] == analysis_type}
     screened_planted = truth_differential & candidates
@@ -178,10 +184,14 @@ def _visit_number(value: Any) -> int | None:
 
 def _pair_correct(row: pd.Series, analysis_type: str, lag_visits: int = 3) -> bool:
     if analysis_type == "near":
-        return str(row["x_canonical_biosample_id"]) == str(row["y_canonical_biosample_id"])
+        return str(row["x_canonical_biosample_id"]) == str(
+            row["y_canonical_biosample_id"]
+        )
     x_visit = _visit_number(row["x_canonical_biosample_id"])
     y_visit = _visit_number(row["y_canonical_biosample_id"])
-    return x_visit is not None and y_visit is not None and y_visit - x_visit == lag_visits
+    return (
+        x_visit is not None and y_visit is not None and y_visit - x_visit == lag_visits
+    )
 
 
 def _optimal_matching_metrics(config: dict[str, Any]) -> list[dict[str, Any]]:
@@ -195,7 +205,9 @@ def _optimal_matching_metrics(config: dict[str, Any]) -> list[dict[str, Any]]:
                 if not frame.empty
                 else pd.Series(dtype=bool)
             )
-            target_reuse = int(frame["y_sample_id"].duplicated().sum()) if not frame.empty else 0
+            target_reuse = (
+                int(frame["y_sample_id"].duplicated().sum()) if not frame.empty else 0
+            )
             rows.append(
                 {
                     "algorithm": "optimal_one_to_one",
@@ -203,9 +215,13 @@ def _optimal_matching_metrics(config: dict[str, Any]) -> list[dict[str, Any]]:
                     "block": path.stem,
                     "pairs": int(len(frame)),
                     "correct_pairs": int(correct.sum()) if len(correct) else 0,
-                    "correct_pair_fraction": float(correct.mean()) if len(correct) else np.nan,
+                    "correct_pair_fraction": float(correct.mean())
+                    if len(correct)
+                    else np.nan,
                     "reused_target_assignments": target_reuse,
-                    "median_abs_time_error_days": float(frame["abs_delta_days"].median())
+                    "median_abs_time_error_days": float(
+                        frame["abs_delta_days"].median()
+                    )
                     if not frame.empty and analysis_type == "near"
                     else float(np.median(np.abs(frame["delta_days"] - 42.0)))
                     if not frame.empty
@@ -230,19 +246,27 @@ def _nearest_reuse_block(
         & set(manifest.loc[manifest["omic"].eq(y_omic), "subject_id"])
     )
     for subject in subjects:
-        x = manifest[manifest["omic"].eq(x_omic) & manifest["subject_id"].eq(subject)].copy()
-        y = manifest[manifest["omic"].eq(y_omic) & manifest["subject_id"].eq(subject)].copy()
+        x = manifest[
+            manifest["omic"].eq(x_omic) & manifest["subject_id"].eq(subject)
+        ].copy()
+        y = manifest[
+            manifest["omic"].eq(y_omic) & manifest["subject_id"].eq(subject)
+        ].copy()
         x = x.sort_values(["study_time", "sample_id"]).reset_index(drop=True)
         y = y.sort_values(["study_time", "sample_id"]).reset_index(drop=True)
         if x.empty or y.empty:
             continue
         delta = _pairwise_delta_days(x, y)
-        valid = np.abs(delta) <= max_days if analysis_type == "near" else (
-            (delta >= min_days) & (delta <= max_days)
+        valid = (
+            np.abs(delta) <= max_days
+            if analysis_type == "near"
+            else ((delta >= min_days) & (delta <= max_days))
         )
         cost = np.abs(delta - target_days)
         for source_index in range(len(x)):
-            eligible = np.flatnonzero(valid[source_index] & np.isfinite(cost[source_index]))
+            eligible = np.flatnonzero(
+                valid[source_index] & np.isfinite(cost[source_index])
+            )
             if not len(eligible):
                 continue
             local_cost = cost[source_index, eligible]
@@ -253,7 +277,8 @@ def _nearest_reuse_block(
                 exact = [
                     target_index
                     for target_index in tied
-                    if str(y.iloc[target_index]["canonical_biosample_id"]) == source_canonical
+                    if str(y.iloc[target_index]["canonical_biosample_id"])
+                    == source_canonical
                 ]
                 target_index = int(exact[0] if exact else tied[0])
             else:
@@ -263,8 +288,12 @@ def _nearest_reuse_block(
                     "subject_id": subject,
                     "x_sample_id": x.iloc[source_index]["sample_id"],
                     "y_sample_id": y.iloc[target_index]["sample_id"],
-                    "x_canonical_biosample_id": x.iloc[source_index]["canonical_biosample_id"],
-                    "y_canonical_biosample_id": y.iloc[target_index]["canonical_biosample_id"],
+                    "x_canonical_biosample_id": x.iloc[source_index][
+                        "canonical_biosample_id"
+                    ],
+                    "y_canonical_biosample_id": y.iloc[target_index][
+                        "canonical_biosample_id"
+                    ],
                     "delta_days": float(delta[source_index, target_index]),
                     "abs_delta_days": abs(float(delta[source_index, target_index])),
                 }
@@ -274,8 +303,12 @@ def _nearest_reuse_block(
 
 def _nearest_reuse_matching_metrics(config: dict[str, Any]) -> list[dict[str, Any]]:
     root = output_root(config)
-    manifest = pd.read_csv(root / "01_prepared" / "sample_manifest.tsv", sep="\t", low_memory=False)
-    manifest = manifest[manifest["valid_for_analysis"].astype(str).str.lower().eq("true")].copy()
+    manifest = pd.read_csv(
+        root / "01_prepared" / "sample_manifest.tsv", sep="\t", low_memory=False
+    )
+    manifest = manifest[
+        manifest["valid_for_analysis"].astype(str).str.lower().eq("true")
+    ].copy()
     manifest["subject_id"] = manifest["subject_id"].astype(str)
     rows = []
     tolerance = float(config["matching"]["near_tolerance_days"])
@@ -283,7 +316,11 @@ def _nearest_reuse_matching_metrics(config: dict[str, Any]) -> list[dict[str, An
         frame = _nearest_reuse_block(
             manifest, x_omic, y_omic, "near", -tolerance, tolerance, 0.0
         )
-        correct = frame.apply(lambda row: _pair_correct(row, "near"), axis=1) if not frame.empty else []
+        correct = (
+            frame.apply(lambda row: _pair_correct(row, "near"), axis=1)
+            if not frame.empty
+            else []
+        )
         rows.append(
             {
                 "algorithm": "nearest_with_reuse",
@@ -291,8 +328,12 @@ def _nearest_reuse_matching_metrics(config: dict[str, Any]) -> list[dict[str, An
                 "block": f"{x_omic}_{y_omic}",
                 "pairs": int(len(frame)),
                 "correct_pairs": int(np.sum(correct)) if len(correct) else 0,
-                "correct_pair_fraction": float(np.mean(correct)) if len(correct) else np.nan,
-                "reused_target_assignments": int(frame["y_sample_id"].duplicated().sum())
+                "correct_pair_fraction": float(np.mean(correct))
+                if len(correct)
+                else np.nan,
+                "reused_target_assignments": int(
+                    frame["y_sample_id"].duplicated().sum()
+                )
                 if not frame.empty
                 else 0,
                 "median_abs_time_error_days": float(frame["abs_delta_days"].median())
@@ -311,7 +352,11 @@ def _nearest_reuse_matching_metrics(config: dict[str, Any]) -> list[dict[str, An
                 float(window["max_days"]),
                 float(window["target_days"]),
             )
-            correct = frame.apply(lambda row: _pair_correct(row, "lagged"), axis=1) if not frame.empty else []
+            correct = (
+                frame.apply(lambda row: _pair_correct(row, "lagged"), axis=1)
+                if not frame.empty
+                else []
+            )
             rows.append(
                 {
                     "algorithm": "nearest_with_reuse",
@@ -319,12 +364,18 @@ def _nearest_reuse_matching_metrics(config: dict[str, Any]) -> list[dict[str, An
                     "block": f"{window['name']}_{x_omic}_to_{y_omic}",
                     "pairs": int(len(frame)),
                     "correct_pairs": int(np.sum(correct)) if len(correct) else 0,
-                    "correct_pair_fraction": float(np.mean(correct)) if len(correct) else np.nan,
-                    "reused_target_assignments": int(frame["y_sample_id"].duplicated().sum())
+                    "correct_pair_fraction": float(np.mean(correct))
+                    if len(correct)
+                    else np.nan,
+                    "reused_target_assignments": int(
+                        frame["y_sample_id"].duplicated().sum()
+                    )
                     if not frame.empty
                     else 0,
                     "median_abs_time_error_days": float(
-                        np.median(np.abs(frame["delta_days"] - float(window["target_days"])))
+                        np.median(
+                            np.abs(frame["delta_days"] - float(window["target_days"]))
+                        )
                     )
                     if not frame.empty
                     else np.nan,
@@ -406,13 +457,18 @@ def _run_one_end_to_end(
     planted_truth_differential = _truth_keys(truth, differential_only=True)
     output = output_root(config)
     retained_features = {
-        omic: set(pd.read_parquet(output / "01_prepared" / "matrices" / f"{omic}.parquet").columns)
+        omic: set(
+            pd.read_parquet(
+                output / "01_prepared" / "matrices" / f"{omic}.parquet"
+            ).columns
+        )
         for omic in ("MG", "MT", "MB")
     }
     truth_differential = {
         edge
         for edge in planted_truth_differential
-        if edge[2] in retained_features[edge[1]] and edge[4] in retained_features[edge[3]]
+        if edge[2] in retained_features[edge[1]]
+        and edge[4] in retained_features[edge[3]]
     }
     candidates = _candidate_keys(output / "04_candidates")
     network_dir = (
@@ -436,7 +492,9 @@ def _run_one_end_to_end(
                 ),
             }
         )
-    matching_rows = _optimal_matching_metrics(config) + _nearest_reuse_matching_metrics(config)
+    matching_rows = _optimal_matching_metrics(config) + _nearest_reuse_matching_metrics(
+        config
+    )
     stage_times["total_seconds"] = time.perf_counter() - started_total
     stage_times["peak_rss_mb"] = _peak_rss_mb()
     stage_times["candidate_edges"] = len(candidates)
@@ -599,22 +657,19 @@ def run_end_to_end_study(
     performance.to_csv(performance_path, sep="\t", index=False)
 
     if not network.empty:
-        summary = (
-            network.groupby(
-                ["truth_mode", "inference_strategy", "analysis_subset"],
-                as_index=False,
-            )
-            .agg(
-                replicates=("replicate", "nunique"),
-                mean_candidate_edges=("candidate_edges", "mean"),
-                mean_called_edges=("called_edges", "mean"),
-                mean_feature_retention_recall=("feature_retention_recall", "mean"),
-                mean_candidate_planted_recall=("candidate_planted_recall", "mean"),
-                mean_planted_edge_recall=("planted_edge_recall", "mean"),
-                mean_planted_edge_precision=("planted_edge_precision", "mean"),
-                mean_non_planted_call_fraction=("non_planted_call_fraction", "mean"),
-                probability_any_non_planted_call=("any_non_planted_call", "mean"),
-            )
+        summary = network.groupby(
+            ["truth_mode", "inference_strategy", "analysis_subset"],
+            as_index=False,
+        ).agg(
+            replicates=("replicate", "nunique"),
+            mean_candidate_edges=("candidate_edges", "mean"),
+            mean_called_edges=("called_edges", "mean"),
+            mean_feature_retention_recall=("feature_retention_recall", "mean"),
+            mean_candidate_planted_recall=("candidate_planted_recall", "mean"),
+            mean_planted_edge_recall=("planted_edge_recall", "mean"),
+            mean_planted_edge_precision=("planted_edge_precision", "mean"),
+            mean_non_planted_call_fraction=("non_planted_call_fraction", "mean"),
+            probability_any_non_planted_call=("any_non_planted_call", "mean"),
         )
     else:
         summary = pd.DataFrame()
@@ -674,7 +729,11 @@ def run_simulation_study(study_config_path: str | Path) -> dict[str, Path]:
     if not isinstance(study, dict):
         raise ValueError("Simulation-study configuration must be a YAML mapping")
     output_value = Path(study.get("output_dir", "../simulation_results/study"))
-    output = output_value if output_value.is_absolute() else config_path.parent / output_value
+    output = (
+        output_value
+        if output_value.is_absolute()
+        else config_path.parent / output_value
+    )
     output = output.resolve()
     output.mkdir(parents=True, exist_ok=True)
     seed = int(study.get("seed", 20260721))
@@ -739,9 +798,7 @@ def run_simulation_study(study_config_path: str | Path) -> dict[str, Path]:
                     )
                 ).items()
             },
-            metabolite_noise_sd=float(
-                end_to_end.get("metabolite_noise_sd", 0.12)
-            ),
+            metabolite_noise_sd=float(end_to_end.get("metabolite_noise_sd", 0.12)),
         )
         outputs.update({f"end_to_end_{key}": value for key, value in result.items()})
         timings["end_to_end_seconds"] = time.perf_counter() - started

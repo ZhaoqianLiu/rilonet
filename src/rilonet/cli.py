@@ -19,14 +19,22 @@ def parser() -> argparse.ArgumentParser:
     )
     result.add_argument("--config", default="configs/analysis_example.yaml")
     commands = result.add_subparsers(dest="command", required=True)
-    commands.add_parser("prepare", help="Map metadata and preprocess MG, MT, and MB matrices")
-    residual = commands.add_parser("residualize", help="Fit feature-wise screening residual models")
+    commands.add_parser(
+        "prepare", help="Map metadata and preprocess MG, MT, and MB matrices"
+    )
+    residual = commands.add_parser(
+        "residualize", help="Fit feature-wise screening residual models"
+    )
     residual.add_argument("--omic", choices=["MG", "MT", "MB", "all"], default="all")
     residual.add_argument("--max-features", type=int)
     residual.add_argument("--workers", type=int)
-    commands.add_parser("pair", help="Build near-contemporaneous and directional lagged pairs")
+    commands.add_parser(
+        "pair", help="Build near-contemporaneous and directional lagged pairs"
+    )
     commands.add_parser("screen", help="Screen cross-omics candidate edges")
-    model = commands.add_parser("model", help="Fit edge-wise differential association models")
+    model = commands.add_parser(
+        "model", help="Fit edge-wise differential association models"
+    )
     model.add_argument("--max-edges", type=int)
     model.add_argument("--baseline-mode", choices=["none", "adjust", "change"])
     model.add_argument("--workers", type=int)
@@ -57,13 +65,9 @@ def parser() -> argparse.ArgumentParser:
     interpretation.add_argument("--resolution", type=float, default=1.0)
     interpretation.add_argument("--seed", type=int, default=20260721)
     interpretation.add_argument("--leiden-runs", type=int, default=10)
-    interpretation.add_argument(
-        "--consensus-threshold", type=float, default=0.55
-    )
+    interpretation.add_argument("--consensus-threshold", type=float, default=0.55)
     interpretation.add_argument("--min-module-size", type=int, default=3)
-    interpretation.add_argument(
-        "--min-module-stability", type=float, default=0.60
-    )
+    interpretation.add_argument("--min-module-stability", type=float, default=0.60)
     interpretation.add_argument("--offline", action="store_true")
     interpretation.add_argument("--hmdb-xml")
     interpretation.add_argument("--ncbi-email")
@@ -105,7 +109,9 @@ def main() -> None:
         prepare_inputs(config)
     elif args.command == "residualize":
         if args.omic == "all":
-            residualize_all(config, max_features=args.max_features, workers=args.workers)
+            residualize_all(
+                config, max_features=args.max_features, workers=args.workers
+            )
         else:
             residualize_omic(
                 config, args.omic, max_features=args.max_features, workers=args.workers

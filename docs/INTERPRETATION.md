@@ -20,8 +20,8 @@ refers to the group supplied with `--condition-group`.
 - MG features are searched in NCBI Taxonomy and returned with taxid and lineage.
 - MT EC features are mapped to KEGG enzyme, pathway, and module terms.
 - MB features are normalized to HMDB accessions. Full chemical taxonomy and
-  pathway annotations require an official local HMDB XML export supplied with
-  `--hmdb-xml`.
+  pathway annotations, and their corresponding enrichment results, require an
+  official local HMDB XML export supplied with `--hmdb-xml`.
 
 HTTP responses are cached by request URL under `database_cache/`. The cache
 supports exact reruns and protects external services from repeated requests.

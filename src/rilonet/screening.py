@@ -6,7 +6,13 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from .common import ensure_dir, load_prepared_manifest, output_root, sample_split_enabled, write_json
+from .common import (
+    ensure_dir,
+    load_prepared_manifest,
+    output_root,
+    sample_split_enabled,
+    write_json,
+)
 
 
 CANDIDATE_COLUMNS = [
@@ -29,7 +35,9 @@ CANDIDATE_COLUMNS = [
 
 
 def _residuals(config: dict[str, Any], omic: str) -> pd.DataFrame:
-    frame = pd.read_parquet(output_root(config) / "02_residuals" / f"{omic}_residuals.parquet")
+    frame = pd.read_parquet(
+        output_root(config) / "02_residuals" / f"{omic}_residuals.parquet"
+    )
     frame.index = frame.index.astype(str)
     return frame
 
@@ -44,7 +52,9 @@ def _arrays(
     work = pairs.copy()
     if analysis_type == "lagged" and baseline_mode in {"adjust", "change"}:
         work = work[work["has_baseline"].astype(str).str.lower().eq("true")].copy()
-    exists = work["x_sample_id"].astype(str).isin(x.index) & work["y_sample_id"].astype(str).isin(y.index)
+    exists = work["x_sample_id"].astype(str).isin(x.index) & work["y_sample_id"].astype(
+        str
+    ).isin(y.index)
     work = work[exists].copy()
     x_values = x.loc[work["x_sample_id"].astype(str)].to_numpy(dtype=float)
     y_values = y.loc[work["y_sample_id"].astype(str)].to_numpy(dtype=float)
@@ -58,7 +68,9 @@ def _arrays(
     return work, x_values, y_values
 
 
-def _correlation(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def _correlation(
+    x: np.ndarray, y: np.ndarray
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     valid_x = np.isfinite(x).all(axis=0) & (np.nanstd(x, axis=0, ddof=1) > 0)
     valid_y = np.isfinite(y).all(axis=0) & (np.nanstd(y, axis=0, ddof=1) > 0)
     x = x[:, valid_x]
@@ -67,7 +79,9 @@ def _correlation(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray, 
         return np.empty((x.shape[1], y.shape[1])), valid_x, valid_y
     x = x - x.mean(axis=0)
     y = y - y.mean(axis=0)
-    result = (x.T @ y) / np.outer(np.sqrt((x**2).sum(axis=0)), np.sqrt((y**2).sum(axis=0)))
+    result = (x.T @ y) / np.outer(
+        np.sqrt((x**2).sum(axis=0)), np.sqrt((y**2).sum(axis=0))
+    )
     return np.clip(result, -1.0, 1.0), valid_x, valid_y
 
 
@@ -90,7 +104,9 @@ def _screening_matrices(
     x_values: np.ndarray,
     y_values: np.ndarray,
     config: dict[str, Any],
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[
+    np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray
+]:
     pooled, valid_x, valid_y = _correlation(x_values, y_values)
     x = x_values[:, valid_x]
     y = y_values[:, valid_y]
@@ -123,7 +139,9 @@ def _screening_matrices(
     )
 
 
-def _top_edges(correlation: np.ndarray, minimum: float, top_k: int, maximum: int) -> list[tuple[int, int]]:
+def _top_edges(
+    correlation: np.ndarray, minimum: float, top_k: int, maximum: int
+) -> list[tuple[int, int]]:
     if not correlation.size:
         return []
     absolute = np.abs(correlation)
@@ -131,11 +149,15 @@ def _top_edges(correlation: np.ndarray, minimum: float, top_k: int, maximum: int
     row_k = min(top_k, absolute.shape[1])
     for row in range(absolute.shape[0]):
         indices = np.argpartition(absolute[row], -row_k)[-row_k:] if row_k else []
-        selected.update((row, int(column)) for column in indices if absolute[row, column] >= minimum)
+        selected.update(
+            (row, int(column)) for column in indices if absolute[row, column] >= minimum
+        )
     col_k = min(top_k, absolute.shape[0])
     for column in range(absolute.shape[1]):
         indices = np.argpartition(absolute[:, column], -col_k)[-col_k:] if col_k else []
-        selected.update((int(row), column) for row in indices if absolute[row, column] >= minimum)
+        selected.update(
+            (int(row), column) for row in indices if absolute[row, column] >= minimum
+        )
     return sorted(selected, key=lambda index: absolute[index], reverse=True)[:maximum]
 
 
@@ -167,7 +189,9 @@ def screen_pair_file(
     work, x_values, y_values = _arrays(
         pairs, x, y, analysis_type, str(cfg.get("baseline_mode", "none"))
     )
-    if len(work) < int(cfg["min_pairs"]) or work["subject_id"].nunique() < int(cfg["min_subjects"]):
+    if len(work) < int(cfg["min_pairs"]) or work["subject_id"].nunique() < int(
+        cfg["min_subjects"]
+    ):
         return pd.DataFrame(columns=CANDIDATE_COLUMNS)
     (
         correlation,
@@ -216,18 +240,26 @@ def screen_pair_file(
     return pd.DataFrame(rows, columns=CANDIDATE_COLUMNS)
 
 
-def _create_participant_split(config: dict[str, Any], output_dir: Path) -> set[str] | None:
+def _create_participant_split(
+    config: dict[str, Any], output_dir: Path
+) -> set[str] | None:
     if not sample_split_enabled(config):
         return None
     cfg = config["screening"]["sample_split"]
     fraction = float(cfg.get("screening_fraction", 0.50))
     if not 0 < fraction < 1:
-        raise ValueError("screening.sample_split.screening_fraction must be between 0 and 1")
+        raise ValueError(
+            "screening.sample_split.screening_fraction must be between 0 and 1"
+        )
     manifest = load_prepared_manifest(config)
-    manifest = manifest[manifest["valid_for_analysis"].astype(str).str.lower().eq("true")]
+    manifest = manifest[
+        manifest["valid_for_analysis"].astype(str).str.lower().eq("true")
+    ]
     subject_info = manifest[["subject_id", "group"]].drop_duplicates()
     if subject_info.groupby("subject_id")["group"].nunique().max() > 1:
-        raise ValueError("A participant cannot belong to multiple groups in sample splitting")
+        raise ValueError(
+            "A participant cannot belong to multiple groups in sample splitting"
+        )
     subject_info = subject_info.drop_duplicates("subject_id").copy()
     rng = np.random.default_rng(int(cfg.get("seed", 20260721)))
     minimum_inference = int(config["modeling"].get("min_subjects_per_group", 5))

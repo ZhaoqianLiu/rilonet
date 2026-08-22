@@ -60,9 +60,7 @@ class ScreeningTests(unittest.TestCase):
     def test_group_specific_screening_retains_sign_reversal(self) -> None:
         x = np.tile(np.asarray([-2.0, -1.0, 1.0, 2.0]), 2)[:, None]
         y = np.concatenate([x[:4, 0], -x[4:, 0]])[:, None]
-        work = pd.DataFrame(
-            {"group": ["reference"] * 4 + ["condition"] * 4}
-        )
+        work = pd.DataFrame({"group": ["reference"] * 4 + ["condition"] * 4})
         config = {
             "metadata": {
                 "group_levels": ["reference", "condition"],
@@ -105,7 +103,9 @@ class ScreeningTests(unittest.TestCase):
 class ModelingTests(unittest.TestCase):
     def test_baseline_is_explicit(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            outputs = generate_simulation_dataset(directory, seed=9, n_subjects=16, n_visits=8)
+            outputs = generate_simulation_dataset(
+                directory, seed=9, n_subjects=16, n_visits=8
+            )
             config = load_config(outputs["config"])
             rows = []
             rng = np.random.default_rng(4)
@@ -186,7 +186,9 @@ class ModelingTests(unittest.TestCase):
 class IntegrationTests(unittest.TestCase):
     def test_simulated_inputs_prepare(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            outputs = generate_simulation_dataset(directory, seed=11, n_subjects=20, n_visits=8)
+            outputs = generate_simulation_dataset(
+                directory, seed=11, n_subjects=20, n_visits=8
+            )
             config = load_config(outputs["config"])
             manifest = prepare_inputs(config)
             self.assertEqual(set(manifest["omic"]), {"MG", "MT", "MB"})
@@ -243,6 +245,7 @@ class IntegrationTests(unittest.TestCase):
                     atol=1e-12,
                 )
 
+
 class SimulationStudyTests(unittest.TestCase):
     def test_peak_memory_is_optional_on_unsupported_platforms(self) -> None:
         with mock.patch("rilonet.simulation_study.resource", None):
@@ -285,7 +288,9 @@ class SimulationStudyTests(unittest.TestCase):
     def test_network_metrics_use_differential_truth(self) -> None:
         true_a = ("near", "MG", "MG_000", "MT", "MT_000")
         false_b = ("near", "MG", "MG_001", "MT", "MT_001")
-        metrics = _network_metrics({true_a}, {true_a, false_b}, {true_a, false_b}, "near")
+        metrics = _network_metrics(
+            {true_a}, {true_a, false_b}, {true_a, false_b}, "near"
+        )
         self.assertEqual(metrics["recovered_planted_edges"], 1)
         self.assertEqual(metrics["non_planted_calls"], 1)
         self.assertAlmostEqual(metrics["planted_edge_precision"], 0.5)

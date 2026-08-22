@@ -50,7 +50,9 @@ def validate_config(config: dict[str, Any]) -> None:
         raise ValueError("RILoNet currently requires exactly two group_levels")
     reference = str(metadata.get("reference_group", ""))
     if reference not in levels:
-        raise ValueError("metadata.reference_group must be one of metadata.group_levels")
+        raise ValueError(
+            "metadata.reference_group must be one of metadata.group_levels"
+        )
     mode = str(config.get("modeling", {}).get("baseline_mode", "none"))
     if mode not in {"none", "adjust", "change"}:
         raise ValueError("modeling.baseline_mode must be none, adjust, or change")
@@ -67,7 +69,11 @@ def configured_workers(
     config: dict[str, Any], override: int | None = None, task_count: int | None = None
 ) -> int:
     """Return the worker count, bounded by the number of tasks when provided."""
-    workers = int(override if override is not None else config.get("compute", {}).get("workers", 1))
+    workers = int(
+        override
+        if override is not None
+        else config.get("compute", {}).get("workers", 1)
+    )
     if workers < 1:
         raise ValueError("workers must be at least 1")
     if task_count is not None:
@@ -103,7 +109,9 @@ def configure_worker(config: dict[str, Any]) -> None:
 def process_context(config: dict[str, Any]) -> Any:
     method = str(config.get("compute", {}).get("start_method", "spawn"))
     if method not in mp.get_all_start_methods():
-        raise ValueError(f"Process start method {method!r} is unavailable on this platform")
+        raise ValueError(
+            f"Process start method {method!r} is unavailable on this platform"
+        )
     return mp.get_context(method)
 
 
@@ -119,7 +127,9 @@ def output_root(config: dict[str, Any]) -> Path:
 
 
 def sample_split_enabled(config: dict[str, Any]) -> bool:
-    return bool(config.get("screening", {}).get("sample_split", {}).get("enabled", False))
+    return bool(
+        config.get("screening", {}).get("sample_split", {}).get("enabled", False)
+    )
 
 
 def split_subjects(config: dict[str, Any], role: str) -> set[str] | None:
@@ -168,7 +178,9 @@ def read_matrix(path: str | Path, orientation: str, sep: str = "\t") -> pd.DataF
     if orientation == "features_by_profiles":
         frame = frame.T
     elif orientation != "profiles_by_features":
-        raise ValueError("orientation must be profiles_by_features or features_by_profiles")
+        raise ValueError(
+            "orientation must be profiles_by_features or features_by_profiles"
+        )
     if not frame.index.is_unique:
         raise ValueError(f"Duplicate profile identifiers in {path}")
     if not frame.columns.is_unique:
@@ -186,7 +198,9 @@ def load_prepared_manifest(config: dict[str, Any]) -> pd.DataFrame:
 
 
 def load_prepared_matrix(config: dict[str, Any], omic: str) -> pd.DataFrame:
-    frame = pd.read_parquet(output_root(config) / "01_prepared" / "matrices" / f"{omic}.parquet")
+    frame = pd.read_parquet(
+        output_root(config) / "01_prepared" / "matrices" / f"{omic}.parquet"
+    )
     frame.index = frame.index.astype(str)
     return frame
 
@@ -233,4 +247,6 @@ def numeric_covariates(config: dict[str, Any]) -> list[str]:
 
 
 def all_covariates(config: dict[str, Any]) -> list[str]:
-    return list(dict.fromkeys(categorical_covariates(config) + numeric_covariates(config)))
+    return list(
+        dict.fromkeys(categorical_covariates(config) + numeric_covariates(config))
+    )

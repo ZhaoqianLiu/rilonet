@@ -57,13 +57,17 @@ def optimal_matches(
     # A large invalid-edge penalty produces maximum cardinality before distance
     # minimization; the small exact-biosample credit breaks equal-cost ties.
     invalid_cost = 1e12
-    cost = np.where(valid & np.isfinite(distance), distance - exact * 1e-6, invalid_cost)
+    cost = np.where(
+        valid & np.isfinite(distance), distance - exact * 1e-6, invalid_cost
+    )
     rows, columns = linear_sum_assignment(cost)
     matches = []
     for row, column in zip(rows, columns):
         if cost[row, column] >= invalid_cost:
             continue
-        matches.append((int(row), int(column), float(delta[row, column]), bool(exact[row, column])))
+        matches.append(
+            (int(row), int(column), float(delta[row, column]), bool(exact[row, column]))
+        )
     return matches
 
 
@@ -80,8 +84,11 @@ def _baseline(
         return None, np.nan
     candidates = candidates.iloc[np.flatnonzero(valid)].copy()
     gaps = lookback[valid]
-    exact = candidates["canonical_biosample_id"].fillna("").astype(str).eq(
-        str(source.get("canonical_biosample_id", ""))
+    exact = (
+        candidates["canonical_biosample_id"]
+        .fillna("")
+        .astype(str)
+        .eq(str(source.get("canonical_biosample_id", "")))
     )
     order = np.lexsort((gaps, ~exact.to_numpy()))
     position = int(order[0])
@@ -151,8 +158,12 @@ def build_near_pairs(config: dict[str, Any]) -> dict[str, pd.DataFrame]:
             & set(manifest.loc[manifest["omic"].eq(y_omic), "subject_id"])
         )
         for subject in subjects:
-            x = manifest[manifest["omic"].eq(x_omic) & manifest["subject_id"].eq(subject)].copy()
-            y = manifest[manifest["omic"].eq(y_omic) & manifest["subject_id"].eq(subject)].copy()
+            x = manifest[
+                manifest["omic"].eq(x_omic) & manifest["subject_id"].eq(subject)
+            ].copy()
+            y = manifest[
+                manifest["omic"].eq(y_omic) & manifest["subject_id"].eq(subject)
+            ].copy()
             x = x.sort_values(["study_time", "sample_id"]).reset_index(drop=True)
             y = y.sort_values(["study_time", "sample_id"]).reset_index(drop=True)
             for index, (xi, yi, delta, exact) in enumerate(
@@ -196,7 +207,9 @@ def build_lag_pairs(config: dict[str, Any]) -> dict[str, pd.DataFrame]:
             name = str(window["name"])
             rows = []
             for subject in subjects:
-                x = manifest[manifest["omic"].eq(x_omic) & manifest["subject_id"].eq(subject)].copy()
+                x = manifest[
+                    manifest["omic"].eq(x_omic) & manifest["subject_id"].eq(subject)
+                ].copy()
                 y = targets[targets["subject_id"].eq(subject)].copy()
                 x = x.sort_values(["study_time", "sample_id"]).reset_index(drop=True)
                 y = y.sort_values(["study_time", "sample_id"]).reset_index(drop=True)
@@ -222,10 +235,20 @@ def build_lag_pairs(config: dict[str, Any]) -> dict[str, pd.DataFrame]:
                         exact,
                         covariates,
                     )
-                    baseline, gap = _baseline(targets, source, lookback) if lookback > 0 else (None, np.nan)
+                    baseline, gap = (
+                        _baseline(targets, source, lookback)
+                        if lookback > 0
+                        else (None, np.nan)
+                    )
                     row["has_baseline"] = baseline is not None
-                    row["baseline_sample_id"] = str(baseline["sample_id"]) if baseline is not None else ""
-                    row["baseline_time"] = baseline.get("study_time", np.nan) if baseline is not None else np.nan
+                    row["baseline_sample_id"] = (
+                        str(baseline["sample_id"]) if baseline is not None else ""
+                    )
+                    row["baseline_time"] = (
+                        baseline.get("study_time", np.nan)
+                        if baseline is not None
+                        else np.nan
+                    )
                     row["baseline_lookback_days"] = gap
                     rows.append(row)
             frame = pd.DataFrame(rows)
@@ -245,9 +268,12 @@ def build_all_pairs(config: dict[str, Any]) -> dict[str, Any]:
         result = {
             "pairs": int(len(frame)),
             "subjects": int(frame["subject_id"].nunique()),
-            "pairs_by_group": {str(k): int(v) for k, v in frame["group"].value_counts().items()},
+            "pairs_by_group": {
+                str(k): int(v) for k, v in frame["group"].value_counts().items()
+            },
             "subjects_by_group": {
-                str(k): int(v) for k, v in frame.groupby("group")["subject_id"].nunique().items()
+                str(k): int(v)
+                for k, v in frame.groupby("group")["subject_id"].nunique().items()
             },
             "median_delta_days": float(frame["delta_days"].median()),
         }

@@ -246,9 +246,7 @@ def annotate_hmdb_features(
     desired = {normalize_hmdb_id(value) for value in feature_list}
     desired.discard("")
     desired_names = {
-        _normalized_metabolite_name(
-            value.split("_", 1)[1] if "_" in value else value
-        )
+        _normalized_metabolite_name(value.split("_", 1)[1] if "_" in value else value)
         for value in feature_list
     }
     bulk_records = (
@@ -451,9 +449,7 @@ def annotate_taxonomy_features(
     return pd.DataFrame(rows)
 
 
-def _select_group_row(
-    subset: pd.DataFrame, group: str, edge_id: str
-) -> pd.Series:
+def _select_group_row(subset: pd.DataFrame, group: str, edge_id: str) -> pd.Series:
     selected = subset[subset["group"].astype(str).eq(group)]
     if len(selected) != 1:
         raise ValueError(
@@ -565,7 +561,9 @@ def build_edge_master(
     result = pd.DataFrame(rows)
     if result["edge_id"].duplicated().any():
         duplicates = result.loc[result["edge_id"].duplicated(), "edge_id"].head()
-        raise ValueError(f"Duplicate edge IDs across network files: {duplicates.tolist()}")
+        raise ValueError(
+            f"Duplicate edge IDs across network files: {duplicates.tolist()}"
+        )
     return result
 
 
@@ -672,13 +670,10 @@ def discover_modules(
             weight = abs(float(row.contrast))
             key = tuple(sorted((source, target)))
             edge_weights[key] += weight
-        nodes = sorted(
-            {node for edge in edge_weights for node in edge}
-        )
+        nodes = sorted({node for edge in edge_weights for node in edge})
         node_index = {node: index for index, node in enumerate(nodes)}
         edges = [
-            (node_index[source], node_index[target])
-            for source, target in edge_weights
+            (node_index[source], node_index[target]) for source, target in edge_weights
         ]
         weights = [float(edge_weights[edge]) for edge in edge_weights]
         graph = ig.Graph(n=len(nodes), edges=edges, directed=False)
@@ -695,8 +690,7 @@ def discover_modules(
             [int(seed), 0 if str(layer) == "near" else 1]
         )
         run_seeds = [
-            int(child.generate_state(1, dtype=np.uint32)[0])
-            % np.iinfo(np.int32).max
+            int(child.generate_state(1, dtype=np.uint32)[0]) % np.iinfo(np.int32).max
             for child in seed_sequence.spawn(len(resolutions) * leiden_runs)
         ]
         consensus_run_memberships = []
@@ -744,8 +738,7 @@ def discover_modules(
 
         membership_matrix = np.vstack(consensus_run_memberships)
         coassignment = np.mean(
-            membership_matrix[:, :, None]
-            == membership_matrix[:, None, :],
+            membership_matrix[:, :, None] == membership_matrix[:, None, :],
             axis=0,
         )
         consensus_edges = []
@@ -772,9 +765,7 @@ def discover_modules(
                 n_iterations=-1,
                 seed=int(seed),
             )
-            final_membership = np.asarray(
-                final_partition.membership, dtype=int
-            )
+            final_membership = np.asarray(final_partition.membership, dtype=int)
             final_modularity = float(
                 consensus_graph.modularity(
                     final_membership.tolist(),
@@ -802,9 +793,7 @@ def discover_modules(
                 and len(omics) >= 2
                 and module_stability >= min_module_stability
             ):
-                candidate_communities.append(
-                    (indices, module_stability, len(omics))
-                )
+                candidate_communities.append((indices, module_stability, len(omics)))
         candidate_communities.sort(
             key=lambda value: (
                 -len(value[0]),
@@ -919,15 +908,12 @@ def summarize_modules(
                 "median_effect_condition": float(edges["effect_condition"].median())
                 if len(edges)
                 else np.nan,
-                "median_attenuation_score": float(
-                    edges["attenuation_score"].median()
-                )
+                "median_attenuation_score": float(edges["attenuation_score"].median())
                 if len(edges)
                 else np.nan,
                 "weakened_fraction": classes["weakened_or_lost"] / max(len(edges), 1),
                 "strengthened_fraction": classes["strengthened"] / max(len(edges), 1),
-                "sign_reversed_fraction": classes["sign_reversed"]
-                / max(len(edges), 1),
+                "sign_reversed_fraction": classes["sign_reversed"] / max(len(edges), 1),
                 "condition_emergent_fraction": classes["condition_emergent"]
                 / max(len(edges), 1),
             }
@@ -994,9 +980,7 @@ def module_enrichment(
                 for module_id, module_nodes in omic_nodes.groupby(
                     "module_id", sort=True
                 ):
-                    module_features = sorted(
-                        set(module_nodes["feature"].astype(str))
-                    )
+                    module_features = sorted(set(module_nodes["feature"].astype(str)))
                     module_entities = {
                         feature_to_entity.get(feature, feature)
                         for feature in module_features
@@ -1099,9 +1083,7 @@ def run_module_interpretation(
     )
     master_path = output / "edge_master.tsv"
     master.to_csv(master_path, sep="\t", index=False)
-    significant = pd.to_numeric(master["contrast_q"], errors="coerce").le(
-        q_threshold
-    )
+    significant = pd.to_numeric(master["contrast_q"], errors="coerce").le(q_threshold)
     eligible = master["primary_network_eligible"].astype(bool)
     discovery = master[significant & eligible].copy()
     discovery = classify_edges(discovery, near_zero_threshold=near_zero_threshold)
@@ -1109,15 +1091,19 @@ def run_module_interpretation(
     discovery.to_csv(discovery_path, sep="\t", index=False)
 
     features = _load_feature_universe(analysis)
-    kegg_client = CachedHttpClient(cache_dir / "kegg", offline=offline, requests_per_second=2.5)
-    hmdb_client = CachedHttpClient(cache_dir / "hmdb", offline=offline, requests_per_second=1.0)
-    ncbi_client = CachedHttpClient(cache_dir / "ncbi", offline=offline, requests_per_second=2.5)
+    kegg_client = CachedHttpClient(
+        cache_dir / "kegg", offline=offline, requests_per_second=2.5
+    )
+    hmdb_client = CachedHttpClient(
+        cache_dir / "hmdb", offline=offline, requests_per_second=1.0
+    )
+    ncbi_client = CachedHttpClient(
+        cache_dir / "ncbi", offline=offline, requests_per_second=2.5
+    )
     kegg_information = kegg_client.get_text(f"{DEFAULT_KEGG_BASE}/info/kegg")
     mt = annotate_ec_features(features["MT"], kegg_client)
     mb = annotate_hmdb_features(features["MB"], hmdb_client, bulk_xml=hmdb_xml)
-    mg = annotate_taxonomy_features(
-        features["MG"], ncbi_client, email=ncbi_email
-    )
+    mg = annotate_taxonomy_features(features["MG"], ncbi_client, email=ncbi_email)
     annotation_paths = {}
     for name, frame in (("MG_taxonomy", mg), ("MT_KEGG", mt), ("MB_HMDB", mb)):
         path = annotation_dir / f"{name}.tsv"
@@ -1141,7 +1127,12 @@ def run_module_interpretation(
     annotation_qc_path = annotation_dir / "annotation_qc.tsv"
     annotation_qc.to_csv(annotation_qc_path, sep="\t", index=False)
     guild_template = mg[["omic", "feature", "matched_name", "taxid"]].copy()
-    for column in ("functional_guild", "evidence_type", "evidence_source", "evidence_id"):
+    for column in (
+        "functional_guild",
+        "evidence_type",
+        "evidence_source",
+        "evidence_id",
+    ):
         guild_template[column] = ""
     guild_template["confidence"] = "unassigned"
     guild_template_path = annotation_dir / "MG_functional_guild_template.tsv"
@@ -1161,9 +1152,7 @@ def run_module_interpretation(
     memberships.to_csv(membership_path, sep="\t", index=False)
     assignments.to_csv(assignment_path, sep="\t", index=False)
     module_diagnostics_path = output / "module_detection_runs.tsv"
-    module_diagnostics.to_csv(
-        module_diagnostics_path, sep="\t", index=False
-    )
+    module_diagnostics.to_csv(module_diagnostics_path, sep="\t", index=False)
     summary = summarize_modules(discovery, memberships, assignments)
     summary_path = output / "module_summary.tsv"
     summary.to_csv(summary_path, sep="\t", index=False)
@@ -1246,5 +1235,7 @@ def run_module_interpretation(
         "module_enrichment": enrichment_path,
         "qc": qc_path,
     }
-    outputs.update({f"annotation_{key}": value for key, value in annotation_paths.items()})
+    outputs.update(
+        {f"annotation_{key}": value for key, value in annotation_paths.items()}
+    )
     return outputs

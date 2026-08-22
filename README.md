@@ -18,7 +18,8 @@ preprocessing → residualization → temporal matching → candidate screening
 - One metadata table
 - Three omics matrices: MG, MT, and MB
 - Internet access for NCBI and KEGG annotation
-- Optional official HMDB XML file for full metabolite annotation
+- An official HMDB XML file for full metabolite annotation and enrichment;
+  without it, only HMDB accession normalization is performed
 
 Input column names, group labels, covariates, time units, matching windows, and
 model settings are defined in YAML. See
@@ -89,8 +90,9 @@ rilonet interpret-modules \
 ```
 
 Interpretation includes feature annotation, differential-edge classification,
-consensus Leiden module discovery, and module enrichment. The HMDB argument can
-be omitted when only HMDB accession normalization is required. See
+consensus Leiden module discovery, and module enrichment. The HMDB XML is
+required to reproduce full metabolite annotation and the corresponding
+enrichment; omit it only when HMDB accession normalization is sufficient. See
 [`docs/INTERPRETATION.md`](docs/INTERPRETATION.md).
 
 ## IBDMDB configuration
