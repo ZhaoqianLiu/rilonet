@@ -103,7 +103,7 @@ be omitted when only HMDB accession normalization is required. See
 
 ## IBDMDB configuration
 
-[`configs/ibdmdb_filtered_baseline_adjust.yaml`](configs/ibdmdb_filtered_baseline_adjust.yaml)
+[`configs/ibdmdb_run.yaml`](configs/ibdmdb_run.yaml)
 contains the settings used for the IBDMDB analysis, including filtered MT
 features, lag baseline adjustment, and global multiple-testing correction.
 
