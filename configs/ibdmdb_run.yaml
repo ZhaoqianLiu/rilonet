@@ -8,7 +8,7 @@ compute:
   start_method: spawn
 
 paths:
-  metadata: ibd_data/hmp2_metadata.csv
+  metadata: ibd_data/metadata.csv
   output_dir: analysis_ibdmdb
 
 metadata:

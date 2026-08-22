@@ -102,7 +102,7 @@ features, lag baseline adjustment, and global multiple-testing correction.
 The ready-to-run input files are together in [`ibd_data/`](ibd_data/):
 
 ```text
-hmp2_metadata.csv
+metadata.csv
 MG_preprocessed.tsv
 MT_preprocessed_filtered.tsv
 MB_preprocessed.tsv
