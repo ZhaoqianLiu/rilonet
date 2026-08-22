@@ -1,7 +1,7 @@
-# RiloNet 发布目录说明
+# RILoNet 发布目录说明
 
 这个目录是从当前最新实现整理出的独立 GitHub 版本，包含三部分：
-RiloNet 纵向多组学网络主框架、simulation 程序，以及 annotation、共识
+RILoNet 纵向多组学网络主框架、simulation 程序，以及 annotation、共识
 Leiden 模块识别和富集分析组成的 interpretation 流程。历史日志、缓存、
 大体积结果、真实队列数据和本机环境均未复制进来。
 

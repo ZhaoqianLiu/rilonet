@@ -85,7 +85,7 @@ results.
 ## Multiple-testing columns
 
 Every modeled block contains `contrast_q_block` and the active adjusted column
-`contrast_q`. With `modeling.multiple_testing_scope: global`, RiloNet also
+`contrast_q`. With `modeling.multiple_testing_scope: global`, RILoNet also
 writes `contrast_q_global` and points `contrast_q` to that network-wide value.
 Interpretation uses `contrast_q` by default; another available adjusted column
 can be selected with `--q-column`.

@@ -48,7 +48,7 @@ class CachedHttpClient:
         request = urllib.request.Request(
             url,
             headers={
-                "User-Agent": "RiloNet/0.1 academic feature annotation",
+                "User-Agent": "RILoNet/0.1 academic feature annotation",
                 "Accept": "application/xml,text/plain,*/*",
             },
         )
@@ -616,7 +616,7 @@ def discover_modules(
     except ImportError as exc:
         raise RuntimeError(
             "Consensus module discovery requires igraph>=0.11 and "
-            "leidenalg>=0.10. Install RiloNet with the interpretation extra: "
+            "leidenalg>=0.10. Install RILoNet with the interpretation extra: "
             "pip install -e '.[interpretation]'."
         ) from exc
     if leiden_runs < 1:

@@ -11,7 +11,7 @@ For every reported analysis, preserve:
 - database release information and permitted annotation caches;
 - random seeds and process-count settings.
 
-RiloNet derives deterministic simulation and validation random streams from the
+RILoNet derives deterministic simulation and validation random streams from the
 configured master seed. Validation draws are designed to remain the same when
 the worker count changes. Set `compute.blas_threads: 1` during process-level
 parallelism to avoid CPU oversubscription.
