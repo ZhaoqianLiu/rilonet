@@ -8,7 +8,7 @@ It provides a workflow for:
 
 ```text
 preprocessing → residualization → temporal matching → candidate screening
-→ differential edge modeling → validation → biological interpretation
+→ differential edge modeling → biological interpretation
 ```
 
 
@@ -74,15 +74,7 @@ rilonet --config configs/my_analysis.yaml model --workers 8
 
 Results are written to the `paths.output_dir` specified in the YAML file.
 
-### 3. Validate selected networks
-
-```bash
-rilonet --config configs/my_analysis.yaml validate \
-  analysis/05_networks/near_MG_MB_edges.tsv \
-  --workers 8
-```
-
-### 4. Run biological interpretation
+### 3. Run biological interpretation
 
 ```bash
 rilonet interpret-modules \
