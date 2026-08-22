@@ -131,10 +131,3 @@ rilonet simulate-study \
 
 30% of participants used for candidate screening, and 70% used for inference. Results are written
 to `results/simulations/end_to_end_split30_70/`.
-
-## Run the tests
-
-```bash
-python -m pip install -e ".[interpretation,dev]"
-python -m pytest
-```
