@@ -107,6 +107,23 @@ be omitted when only HMDB accession normalization is required. See
 contains the settings used for the IBDMDB analysis, including filtered MT
 features, lag baseline adjustment, and global multiple-testing correction.
 
+The ready-to-run input files are together in [`ibd_data/`](ibd_data/):
+
+```text
+hmp2_metadata.csv
+MG_preprocessed.tsv
+MT_preprocessed_filtered.tsv
+MB_preprocessed.tsv
+```
+
+The metadata contains only the 11 columns required by this configuration. Run
+the complete IBDMDB analysis with:
+
+```bash
+rilonet --config configs/ibdmdb_run.yaml run-core --workers 8
+```
+
+Results are written to `analysis_ibdmdb_filtered_baseline_adjust/`.
 
 ## Reproduce the end-to-end simulation
 

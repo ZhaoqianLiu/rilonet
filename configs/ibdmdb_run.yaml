@@ -1,5 +1,4 @@
-# Public configuration for the IBDMDB analysis. The governed input tables are
-# not distributed with this repository; place them under data/ and processed/.
+# Ready-to-run configuration for the included IBDMDB analysis data.
 project_root: ..
 
 compute:
@@ -9,7 +8,7 @@ compute:
   start_method: spawn
 
 paths:
-  metadata: data/hmp2_metadata.csv
+  metadata: ibd_data/hmp2_metadata.csv
   output_dir: analysis_ibdmdb_filtered_baseline_adjust
 
 metadata:
@@ -39,19 +38,19 @@ metadata:
 
 omics:
   MG:
-    path: processed/MG_preprocessed.tsv
+    path: ibd_data/MG_preprocessed.tsv
     orientation: features_by_profiles
     sample_id_strip_suffix: _profile
     preprocessing:
       mode: transformed
   MT:
-    path: processed/MT_preprocessed_filtered.tsv
+    path: ibd_data/MT_preprocessed_filtered.tsv
     orientation: features_by_profiles
     sample_id_strip_suffix: _level4ec
     preprocessing:
       mode: transformed
   MB:
-    path: processed/MB_preprocessed.tsv
+    path: ibd_data/MB_preprocessed.tsv
     orientation: features_by_profiles
     preprocessing:
       mode: transformed
