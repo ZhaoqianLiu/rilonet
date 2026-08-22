@@ -115,7 +115,10 @@ the complete IBDMDB analysis with:
 rilonet --config configs/ibdmdb_run.yaml run-core --workers 8
 ```
 
-Results are written to `analysis_ibdmdb_filtered_baseline_adjust/`.
+Results are written to `analysis_ibdmdb/`. Because this configuration uses
+baseline adjustment, modeled networks are in
+`analysis_ibdmdb/05_networks_baseline_adjust/` and can be passed directly to
+the interpretation command above.
 
 ## Reproduce the end-to-end simulation
 

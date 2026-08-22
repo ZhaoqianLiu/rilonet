@@ -580,7 +580,7 @@ def classify_edges(
         if abs(reference) >= near_zero_threshold > abs(condition):
             label = "weakened_or_lost"
         elif abs(reference) < near_zero_threshold <= abs(condition):
-            label = "IBD_emergent"
+            label = "condition_emergent"
         elif reference * condition < 0:
             label = "sign_reversed"
         elif abs(condition) < abs(reference):
@@ -928,7 +928,7 @@ def summarize_modules(
                 "strengthened_fraction": classes["strengthened"] / max(len(edges), 1),
                 "sign_reversed_fraction": classes["sign_reversed"]
                 / max(len(edges), 1),
-                "IBD_emergent_fraction": classes["IBD_emergent"]
+                "condition_emergent_fraction": classes["condition_emergent"]
                 / max(len(edges), 1),
             }
         )

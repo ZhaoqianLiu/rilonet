@@ -62,7 +62,7 @@ class InterpretationTests(unittest.TestCase):
         classified = classify_edges(edges, near_zero_threshold=0.15)
         self.assertEqual(
             classified["edge_class"].tolist(),
-            ["weakened_or_lost", "IBD_emergent", "sign_reversed"],
+            ["weakened_or_lost", "condition_emergent", "sign_reversed"],
         )
 
     @unittest.skipUnless(

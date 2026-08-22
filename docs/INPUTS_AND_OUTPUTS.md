@@ -77,6 +77,10 @@ analysis/
 └── 06_modules/
 ```
 
+With `modeling.baseline_mode: adjust` or `change`, the corresponding folders
+are named `05_networks_baseline_adjust` or `05_networks_baseline_change` and
+the interpretation folders follow the same suffix.
+
 Passing `--max-features` or `--max-edges` creates deliberately limited
 smoke-test outputs. These files verify integration only and are not scientific
 results.

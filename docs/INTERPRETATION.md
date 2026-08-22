@@ -13,9 +13,8 @@ orientations disagree in sign are excluded from the primary discovery network.
 
 Selected edges are classified as weakened/lost, condition-emergent,
 sign-reversed, strengthened, or stable according to the two group effects and
-the configured near-zero threshold. The current IBD-oriented output label for a
-condition-emergent edge is `IBD_emergent`; users of other cohorts should treat
-this as the configured condition group, not as a hard-coded statistical group.
+the configured near-zero threshold. The label `condition_emergent` always
+refers to the group supplied with `--condition-group`.
 
 ## 2. Feature annotation
 

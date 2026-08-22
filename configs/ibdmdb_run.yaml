@@ -9,7 +9,7 @@ compute:
 
 paths:
   metadata: ibd_data/hmp2_metadata.csv
-  output_dir: analysis_ibdmdb_filtered_baseline_adjust
+  output_dir: analysis_ibdmdb
 
 metadata:
   sep: ","
