@@ -28,10 +28,6 @@ supports exact reruns and protects external services from repeated requests.
 Supply `--ncbi-email` in accordance with NCBI guidance. `--offline` raises an
 error on a missing cache entry; it does not silently produce partial mappings.
 
-Database annotations can change. Archive the cache, QC JSON, and HMDB release
-identifier used for any manuscript result where the applicable database terms
-allow this.
-
 ## 3. Consensus Leiden modules
 
 Near and lagged networks are partitioned separately. Edge weights are the

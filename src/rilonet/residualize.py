@@ -228,8 +228,7 @@ def residualize_omic(
     design_values = design.to_numpy(dtype=float)
     groups = manifest["subject_id"].astype(str).to_numpy()
     worker_count = configured_workers(config, workers, matrix.shape[1])
-    # Apply environment limits before spawning so child interpreters inherit
-    # them even when threadpoolctl is not yet installed in a development tree.
+    # Set numeric thread limits before spawning so worker processes inherit them.
     configure_worker(config)
     output_dir = ensure_dir(output_root(config) / "02_residuals")
     raw_values = np.empty(values.shape, dtype=float)

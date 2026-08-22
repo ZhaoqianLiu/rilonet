@@ -36,11 +36,7 @@ def _z(values: pd.Series | np.ndarray) -> np.ndarray:
 
 
 def _near_association_method(config: dict[str, Any]) -> str:
-    """Return the configured near-synchronous association method.
-
-    The default preserves the original production behavior.  The aliases are
-    accepted so older or more explicit configuration files remain readable.
-    """
+    """Return the normalized near-synchronous association method."""
     value = str(
         config.get("modeling", {}).get("near_association_method", "max_p")
     ).strip().lower()

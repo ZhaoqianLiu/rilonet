@@ -461,8 +461,7 @@ def run_end_to_end_study(
     output = Path(output_dir).resolve()
     output.mkdir(parents=True, exist_ok=True)
     dimensions = dimensions or {"MG": 10, "MT": 12, "MB": 8}
-    # In YAML, an unquoted `null` is parsed as None. Accept that natural spelling
-    # and normalize it to the intended null-network scenario.
+    # Normalize YAML null values to the null-network scenario name.
     modes = ["null" if value is None else str(value) for value in truth_modes]
     invalid = set(modes) - {"null", "differential"}
     if invalid:
@@ -635,10 +634,6 @@ def run_end_to_end_study(
                 "retain_replicates": retain_replicates,
                 "screening_fraction": screening_fraction,
                 "network_truth_definition": "planted_direct_structural_edges",
-                "non_planted_call_interpretation": (
-                    "false discoveries only under the global-null mode; under differential "
-                    "modes they may include induced marginal associations"
-                ),
             },
             sort_keys=False,
         ),
@@ -690,8 +685,7 @@ def run_simulation_study(study_config_path: str | Path) -> dict[str, Path]:
             )
         if split_residualization_scope == "screening_subjects":
             raise NotImplementedError(
-                "end_to_end.split_residualization_scope=screening_subjects is not "
-                "implemented; refusing to run a mislabeled strict-split simulation"
+                "end_to_end.split_residualization_scope=screening_subjects is not supported"
             )
         started = time.perf_counter()
         result = run_end_to_end_study(

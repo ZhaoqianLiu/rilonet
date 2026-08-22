@@ -172,8 +172,7 @@ def generate_simulation_dataset(
         subject = f"S{subject_index:04d}"
         group = "condition" if rng.random() < condition_fraction else "reference"
         group_index = int(group == "condition")
-        # Site is moderately imbalanced by group to test covariate adjustment
-        # without making group perfectly predictable.
+        # Add moderate site imbalance for the covariate-adjustment scenario.
         site_probability = 0.65 if group == "condition" else 0.35
         site = "Site_B" if rng.random() < site_probability else "Site_A"
         age = float(np.clip(rng.normal(42 + 4 * group_index, 12), 18, 80))

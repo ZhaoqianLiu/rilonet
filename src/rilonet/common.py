@@ -66,7 +66,7 @@ def validate_config(config: dict[str, Any]) -> None:
 def configured_workers(
     config: dict[str, Any], override: int | None = None, task_count: int | None = None
 ) -> int:
-    """Return a bounded process count while keeping one worker as the safe default."""
+    """Return the worker count, bounded by the number of tasks when provided."""
     workers = int(override if override is not None else config.get("compute", {}).get("workers", 1))
     if workers < 1:
         raise ValueError("workers must be at least 1")
