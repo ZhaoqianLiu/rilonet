@@ -1,6 +1,6 @@
 # RILoNet
 
-RILoNet is a Python framework for differential cross-omics network analysis of
+RILoNet is a Python framework for differential cross-omics network signatures analysis of
 longitudinal metagenomics (MG), metatranscriptomics (MT), and metabolomics (MB)
 data.
 
@@ -11,8 +11,6 @@ preprocessing → residualization → temporal matching → candidate screening
 → differential edge modeling → validation → biological interpretation
 ```
 
-The repository also includes the end-to-end simulation configuration used for
-the reported 30% screening / 70% inference experiment.
 
 ## Requirements
 
