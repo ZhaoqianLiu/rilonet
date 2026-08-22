@@ -115,8 +115,7 @@ rilonet simulate-study \
   --study-config configs/simulation/end_to_end_split30_70.yaml
 ```
 
-30% of participants used for candidate screening, and 70% used for inference. The
-archived run produced near planted-edge recall of **0.78**. Results are written
+30% of participants used for candidate screening, and 70% used for inference. Results are written
 to `results/simulations/end_to_end_split30_70/`.
 
 ## Run the tests
