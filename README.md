@@ -4,7 +4,7 @@ RILoNet is a Python framework for phenotype-associated cross-omics network signa
 longitudinal metagenomics (MG), metatranscriptomics (MT), and metabolomics (MB)
 data.
 
-It provides one workflow for:
+It provides a workflow for:
 
 ```text
 preprocessing → residualization → temporal matching → candidate screening
