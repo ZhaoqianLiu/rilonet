@@ -1,6 +1,6 @@
 # RILoNet
 
-RiloNet infers differential cross-omics network signatures from longitudinal
+RILoNet infers differential cross-omics network signatures from longitudinal
 metagenomics (MG), metatranscriptomics (MT), and metabolomics (MB) data. This
 repository contains the runnable core framework, the simulation program, and
 the feature-annotation and consensus-module interpretation workflow.
