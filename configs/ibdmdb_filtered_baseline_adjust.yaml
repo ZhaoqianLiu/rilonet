@@ -1,0 +1,110 @@
+# Public configuration for the IBDMDB analysis. The governed input tables are
+# not distributed with this repository; place them under data/ and processed/.
+project_root: ..
+
+compute:
+  workers: 8
+  blas_threads: 1
+  tasks_per_worker: 4
+  start_method: spawn
+
+paths:
+  metadata: data/hmp2_metadata.csv
+  output_dir: analysis_ibdmdb_filtered_baseline_adjust
+
+metadata:
+  sep: ","
+  columns:
+    sample_id: External ID
+    participant_id: Participant ID
+    omic: data_type
+    group: diagnosis
+    collection_date: date_of_receipt
+    study_time: week_num
+  omic_mapping:
+    metagenomics: MG
+    metatranscriptomics: MT
+    metabolomics: MB
+  group_levels: [nonIBD, IBD]
+  reference_group: nonIBD
+  group_mapping:
+    nonIBD: nonIBD
+    CD: IBD
+    UC: IBD
+  study_time_unit_days: 7
+  allow_canonical_fallback: true
+  canonical_id_replacements:
+    - pattern: "_P$"
+      replacement: ""
+
+omics:
+  MG:
+    path: processed/MG_preprocessed.tsv
+    orientation: features_by_profiles
+    sample_id_strip_suffix: _profile
+    preprocessing:
+      mode: transformed
+  MT:
+    path: processed/MT_preprocessed_filtered.tsv
+    orientation: features_by_profiles
+    sample_id_strip_suffix: _level4ec
+    preprocessing:
+      mode: transformed
+  MB:
+    path: processed/MB_preprocessed.tsv
+    orientation: features_by_profiles
+    preprocessing:
+      mode: transformed
+
+covariates:
+  categorical:
+    - site_name
+    - sex
+    - Antibiotics
+    - Immunosuppressants (e.g. oral corticosteroids)
+  numeric: [consent_age]
+  static: [site_name, sex, consent_age]
+
+residualization:
+  include_group_main_effect: true
+  time_spline_df: 3
+  min_observations: 20
+  min_subjects: 8
+  reml: true
+  max_iterations: 200
+  optimizers: [lbfgs, powell, cg]
+
+matching:
+  near_tolerance_days: 14
+  lag_windows:
+    - name: lag_4_8w
+      min_days: 28
+      max_days: 56
+      target_days: 42
+  baseline_lookback_days: 28
+
+screening:
+  min_pairs: 30
+  min_subjects: 10
+  min_abs_correlation: 0.15
+  top_k_per_feature: 15
+  max_edges_per_block: 5000
+  baseline_mode: adjust
+
+modeling:
+  min_pairs: 30
+  min_subjects: 10
+  min_subjects_per_group: 5
+  near_fit_both_orientations: true
+  baseline_mode: adjust
+  max_iterations: 200
+  optimizers: [lbfgs, powell, cg]
+  multiple_testing_scope: global
+
+validation:
+  q_threshold: 0.05
+  max_edges: 100
+  bootstrap_replicates: 500
+  permutation_replicates: 1000
+  permutation_strata: [site_name]
+  seed: 20260715

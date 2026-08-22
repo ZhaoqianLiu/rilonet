@@ -1,0 +1,22 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# User data and generated analyses are intentionally not versioned.
+data/
+analysis/
+results/
+simulation_results/
+database_cache/
+*.parquet
+*.log
+
+# Local editor and operating-system files.
+.DS_Store
+.idea/
+.vscode/

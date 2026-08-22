@@ -1,0 +1,2 @@
+# Install the complete framework, including consensus-Leiden interpretation.
+-e .[interpretation]
