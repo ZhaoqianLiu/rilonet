@@ -106,7 +106,7 @@ be omitted when only HMDB accession normalization is required. See
 [`configs/ibdmdb_filtered_baseline_adjust.yaml`](configs/ibdmdb_filtered_baseline_adjust.yaml)
 contains the settings used for the IBDMDB analysis, including filtered MT
 features, lag baseline adjustment, and global multiple-testing correction.
-IBDMDB metadata and omics matrices are not distributed in this repository.
+
 
 ## Reproduce the end-to-end simulation
 
@@ -115,8 +115,7 @@ rilonet simulate-study \
   --study-config configs/simulation/end_to_end_split30_70.yaml
 ```
 
-This configuration runs 200 replicates with 240 participants, 18 visits, 30%
-of participants used for candidate screening, and 70% used for inference. The
+30% of participants used for candidate screening, and 70% used for inference. The
 archived run produced near planted-edge recall of **0.78**. Results are written
 to `results/simulations/end_to_end_split30_70/`.
 
