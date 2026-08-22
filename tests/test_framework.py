@@ -3,6 +3,7 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import numpy as np
 import pandas as pd
@@ -14,7 +15,7 @@ from rilonet.prepare import _clr_transform, _pqn_log2_transform, prepare_inputs
 from rilonet.residualize import residualize_all
 from rilonet.screening import _create_participant_split, _screening_matrices, screen_all
 from rilonet.simulate import generate_simulation_dataset
-from rilonet.simulation_study import _network_metrics
+from rilonet.simulation_study import _network_metrics, _peak_rss_mb
 
 
 class PreprocessingTests(unittest.TestCase):
@@ -243,6 +244,10 @@ class IntegrationTests(unittest.TestCase):
                 )
 
 class SimulationStudyTests(unittest.TestCase):
+    def test_peak_memory_is_optional_on_unsupported_platforms(self) -> None:
+        with mock.patch("rilonet.simulation_study.resource", None):
+            self.assertTrue(np.isnan(_peak_rss_mb()))
+
     def test_null_generator_has_no_differential_truth(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             outputs = generate_simulation_dataset(

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import re
-import resource
 import tempfile
 import time
 from pathlib import Path
@@ -24,6 +23,18 @@ from .prepare import prepare_inputs
 from .residualize import residualize_all
 from .screening import screen_all
 from .simulate import generate_simulation_dataset
+
+try:
+    import resource
+except ImportError:  # Not available on Windows.
+    resource = None
+
+
+def _peak_rss_mb() -> float:
+    """Return peak resident memory in MiB when the platform provides it."""
+    if resource is None:
+        return float("nan")
+    return float(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) / 1024.0
 
 
 def _edge_key(
@@ -427,7 +438,7 @@ def _run_one_end_to_end(
         )
     matching_rows = _optimal_matching_metrics(config) + _nearest_reuse_matching_metrics(config)
     stage_times["total_seconds"] = time.perf_counter() - started_total
-    stage_times["peak_rss_mb"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0
+    stage_times["peak_rss_mb"] = _peak_rss_mb()
     stage_times["candidate_edges"] = len(candidates)
     stage_times["called_edges"] = len(called)
     stage_times["planted_differential_edges"] = len(planted_truth_differential)
