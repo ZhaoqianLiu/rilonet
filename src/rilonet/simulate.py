@@ -354,14 +354,6 @@ def generate_simulation_dataset(
             "max_iterations": 200,
             "optimizers": ["lbfgs", "powell", "cg"],
         },
-        "validation": {
-            "q_threshold": 0.05,
-            "max_edges": 100,
-            "bootstrap_replicates": 500,
-            "permutation_replicates": 1000,
-            "permutation_strata": ["site"],
-            "seed": seed,
-        },
     }
     config_path = root / "config.yaml"
     with config_path.open("w", encoding="utf-8") as handle:

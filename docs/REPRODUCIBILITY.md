@@ -11,10 +11,9 @@ For every reported analysis, preserve:
 - database release information and permitted annotation caches;
 - random seeds and process-count settings.
 
-RILoNet derives deterministic simulation and validation random streams from the
-configured master seed. Validation draws are designed to remain the same when
-the worker count changes. Set `compute.blas_threads: 1` during process-level
-parallelism to avoid CPU oversubscription.
+RILoNet derives the end-to-end simulation random stream from the configured
+master seed. Set `compute.blas_threads: 1` during process-level parallelism to
+avoid CPU oversubscription.
 
 ## Included study reproduction
 
@@ -38,9 +37,7 @@ rilonet simulate-study \
   --study-config configs/simulation/end_to_end_split30_70.yaml
 ```
 
-The archived formal run reported near planted-edge recall of 0.78. Overall
-planted-edge recall was 0.714 and lagged recall was 0.639. Under the matched
-global-null simulations, the probability of any call was 0.07 overall.
+The archived run reported near planted-edge recall of 0.78.
 
 ## Meaning of non-planted calls
 

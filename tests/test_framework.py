@@ -14,16 +14,7 @@ from rilonet.prepare import _clr_transform, _pqn_log2_transform, prepare_inputs
 from rilonet.residualize import residualize_all
 from rilonet.screening import _create_participant_split, _screening_matrices, screen_all
 from rilonet.simulate import generate_simulation_dataset
-from rilonet.simulation_study import (
-    EdgeScenario,
-    NearScenario,
-    _fit_symmetric_near,
-    _network_metrics,
-    run_edge_model_study,
-    run_near_orientation_study,
-    simulate_near_rows,
-)
-from rilonet.validation import _selected_edges, validate_network
+from rilonet.simulation_study import _network_metrics
 
 
 class PreprocessingTests(unittest.TestCase):
@@ -145,17 +136,6 @@ class ModelingTests(unittest.TestCase):
             self.assertIn("baseline_outcome_within_by_condition", adjusted_design)
             self.assertIn("baseline_outcome_between_by_condition", adjusted_design)
 
-    def test_validation_selection_uses_contrast_only(self) -> None:
-        network = pd.DataFrame(
-            {
-                "edge_id": ["A", "A", "B", "B"],
-                "effect_q": [0.001, 0.001, 0.9, 0.9],
-                "contrast_q": [0.5, 0.5, 0.01, 0.01],
-            }
-        )
-        selected = _selected_edges(network, 0.05, 10)
-        self.assertEqual(set(selected["edge_id"]), {"B"})
-
     def test_global_bh_uses_all_network_files(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -262,91 +242,7 @@ class IntegrationTests(unittest.TestCase):
                     atol=1e-12,
                 )
 
-            source = sorted(network_dir.glob("near_*_edges.tsv"))[0]
-            network = pd.read_csv(source, sep="\t")
-            network["contrast_q"] = 0.0
-            validation_input = root / "validation_input.tsv"
-            network.to_csv(validation_input, sep="\t", index=False)
-            validate_network(
-                config,
-                validation_input,
-                bootstrap_replicates=2,
-                permutation_replicates=2,
-                max_edges=1,
-                workers=1,
-            )
-            validation_dir = root / "06_validation" / validation_input.stem
-            serial_draws = {
-                path.name: pd.read_parquet(path)
-                for path in validation_dir.glob("*_draws.parquet")
-            }
-            validate_network(
-                config,
-                validation_input,
-                bootstrap_replicates=2,
-                permutation_replicates=2,
-                max_edges=1,
-                workers=2,
-            )
-            for name, expected in serial_draws.items():
-                pd.testing.assert_frame_equal(
-                    expected,
-                    pd.read_parquet(validation_dir / name),
-                    check_exact=False,
-                    rtol=1e-12,
-                    atol=1e-12,
-                )
-
-
 class SimulationStudyTests(unittest.TestCase):
-    def test_symmetric_near_fit_is_orientation_invariant(self) -> None:
-        data, _ = simulate_near_rows(
-            NearScenario("test", 0.10, 0.55),
-            np.random.default_rng(41),
-            n_subjects=30,
-            visits=6,
-            condition_fraction=0.50,
-            participant_intercept_sd=0.60,
-        )
-        forward = _fit_symmetric_near(data)
-        swapped = data.rename(columns={"x": "y", "y": "x"})
-        reverse = _fit_symmetric_near(swapped)
-        self.assertAlmostEqual(forward["contrast_estimate"], reverse["contrast_estimate"])
-        self.assertAlmostEqual(forward["contrast_se"], reverse["contrast_se"])
-        self.assertAlmostEqual(forward["contrast_p"], reverse["contrast_p"])
-
-    def test_near_study_outputs_all_comparison_methods(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            outputs = run_near_orientation_study(
-                directory,
-                replicates=1,
-                seed=43,
-                n_subjects=20,
-                visits=5,
-                condition_fraction=0.50,
-                scenarios=[NearScenario("test_null", 0.0, 0.0)],
-            )
-            summary = pd.read_csv(outputs["summary"], sep="\t")
-            self.assertEqual(
-                set(summary["method"]),
-                {
-                    "forward",
-                    "reverse",
-                    "combined_max_p",
-                    "combined_bonferroni_min_p",
-                    "symmetric_fisher_z",
-                },
-            )
-            symmetric = summary[summary["method"].eq("symmetric_fisher_z")].iloc[0]
-            self.assertTrue(np.isfinite(symmetric["coverage_95"]))
-            combinations = summary[
-                summary["method"].isin(
-                    ["combined_max_p", "combined_bonferroni_min_p"]
-                )
-            ]
-            self.assertTrue(combinations["coverage_95"].isna().all())
-            self.assertTrue(combinations["mixedlm_rate"].isna().all())
-
     def test_null_generator_has_no_differential_truth(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             outputs = generate_simulation_dataset(
@@ -380,33 +276,6 @@ class SimulationStudyTests(unittest.TestCase):
             for analysis_type in ("near", "lagged"):
                 for category in ("weakened", "strengthened", "sign_reversed"):
                     self.assertEqual(int(counts.loc[(analysis_type, category)]), 1)
-
-    def test_edge_study_writes_monte_carlo_metrics(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            outputs = run_edge_model_study(
-                directory,
-                replicates=2,
-                seed=29,
-                n_subjects=20,
-                visits=5,
-                scenarios=[EdgeScenario("test_global_null", 0.0, 0.0, beta_between=0.0)],
-            )
-            summary = pd.read_csv(outputs["summary"], sep="\t")
-            self.assertEqual(
-                set(summary["method"]),
-                {
-                    "proposed",
-                    "naive_no_decomposition",
-                    "naive_ols_interaction",
-                },
-            )
-            self.assertTrue(summary["success_rate"].eq(1.0).all())
-            self.assertTrue(summary["metric_label"].eq("type_I_error").all())
-            self.assertTrue(
-                {"bias", "rmse", "coverage_95", "rejection_rate_0.05"}.issubset(
-                    summary.columns
-                )
-            )
 
     def test_network_metrics_use_differential_truth(self) -> None:
         true_a = ("near", "MG", "MG_000", "MT", "MT_000")

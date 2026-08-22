@@ -99,11 +99,3 @@ modeling:
   max_iterations: 200
   optimizers: [lbfgs, powell, cg]
   multiple_testing_scope: global
-
-validation:
-  q_threshold: 0.05
-  max_edges: 100
-  bootstrap_replicates: 500
-  permutation_replicates: 1000
-  permutation_strata: [site_name]
-  seed: 20260715

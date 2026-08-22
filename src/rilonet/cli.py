@@ -9,9 +9,7 @@ from .modeling import model_all
 from .prepare import prepare_inputs
 from .residualize import residualize_all, residualize_omic
 from .screening import screen_all
-from .simulate import generate_simulation_dataset
 from .simulation_study import run_simulation_study
-from .validation import validate_network
 
 
 def parser() -> argparse.ArgumentParser:
@@ -32,24 +30,12 @@ def parser() -> argparse.ArgumentParser:
     model.add_argument("--max-edges", type=int)
     model.add_argument("--baseline-mode", choices=["none", "adjust", "change"])
     model.add_argument("--workers", type=int)
-    validate = commands.add_parser("validate", help="Bootstrap and permutation assessment")
-    validate.add_argument("network_file")
-    validate.add_argument("--bootstrap-replicates", type=int)
-    validate.add_argument("--permutation-replicates", type=int)
-    validate.add_argument("--max-edges", type=int)
-    validate.add_argument("--workers", type=int)
-    validate.add_argument("--output-dir")
     run = commands.add_parser("run-core", help="Run prepare through edge modeling")
     run.add_argument("--max-features", type=int)
     run.add_argument("--max-edges", type=int)
     run.add_argument("--workers", type=int)
-    simulate = commands.add_parser("simulate", help="Generate a synthetic MG-MT-MB dataset and truth file")
-    simulate.add_argument("--output-dir", required=True)
-    simulate.add_argument("--seed", type=int, default=20260715)
-    simulate.add_argument("--subjects", type=int, default=120)
-    simulate.add_argument("--visits", type=int, default=18)
     simulation_study = commands.add_parser(
-        "simulate-study", help="Run model-level and end-to-end simulation validation"
+        "simulate-study", help="Run the end-to-end simulation study"
     )
     simulation_study.add_argument("--study-config", required=True)
     interpretation = commands.add_parser(
@@ -86,16 +72,6 @@ def parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = parser().parse_args()
-    if args.command == "simulate":
-        outputs = generate_simulation_dataset(
-            args.output_dir,
-            seed=args.seed,
-            n_subjects=args.subjects,
-            n_visits=args.visits,
-        )
-        for name, path in outputs.items():
-            print(f"{name}: {path}")
-        return
     if args.command == "simulate-study":
         outputs = run_simulation_study(args.study_config)
         for name, path in outputs.items():
@@ -144,16 +120,6 @@ def main() -> None:
             max_edges=args.max_edges,
             baseline_mode=args.baseline_mode,
             workers=args.workers,
-        )
-    elif args.command == "validate":
-        validate_network(
-            config,
-            args.network_file,
-            bootstrap_replicates=args.bootstrap_replicates,
-            permutation_replicates=args.permutation_replicates,
-            max_edges=args.max_edges,
-            workers=args.workers,
-            output_dir=args.output_dir,
         )
     elif args.command == "run-core":
         prepare_inputs(config)

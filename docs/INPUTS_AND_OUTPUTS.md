@@ -74,7 +74,6 @@ analysis/
 │   ├── *_edges.tsv
 │   ├── *_fit_diagnostics.tsv
 │   └── network_modeling_qc.json
-├── 06_validation/
 └── 06_modules/
 ```
 
@@ -90,14 +89,8 @@ writes `contrast_q_global` and points `contrast_q` to that network-wide value.
 Interpretation uses `contrast_q` by default; another available adjusted column
 can be selected with `--q-column`.
 
-## Data that should not be committed
+## Included IBDMDB example
 
-Do not commit participant-level metadata, real omics matrices, prepared
-Parquet files, database exports, or unrestricted analysis outputs unless the
-data-use agreement explicitly allows it. The repository `.gitignore` excludes
-the standard data and results directories, but responsibility for de-identifying
-and licensing inputs remains with the user.
-
-The supplied `configs/ibdmdb_filtered_baseline_adjust.yaml` is configuration
-only. It expects `data/hmp2_metadata.csv` and three transformed tables under
-`processed/`; none of these governed data files are included.
+The ready-to-run IBDMDB inputs are together under `ibd_data/`. The metadata is
+limited to the 11 columns used by `configs/ibdmdb_run.yaml`; the same folder
+contains the transformed MG, filtered MT, and transformed MB matrices.
