@@ -1,7 +1,6 @@
-# End-to-end simulation used for the reported 30%/70% sample split.
+# End-to-end simulation with a 30%/70% sample split.
 # Thirty percent of participants are used for candidate screening and the
-# remaining seventy percent for inference. In the archived 200-replicate run,
-# near planted-edge recall was 0.78.
+# remaining seventy percent for inference.
 
 seed: 20262017
 output_dir: ../../results/simulations/end_to_end_split30_70

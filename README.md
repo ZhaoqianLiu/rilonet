@@ -120,7 +120,7 @@ baseline adjustment, modeled networks are in
 `analysis_ibdmdb/05_networks_baseline_adjust/` and can be passed directly to
 the interpretation command above.
 
-## Reproduce the end-to-end simulation
+## Run the end-to-end simulation
 
 ```bash
 rilonet simulate-study \

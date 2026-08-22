@@ -1,8 +1,7 @@
 # Interpretation workflow
 
 `rilonet interpret-modules` consumes completed network fits and the prepared
-feature universe. It produces a reproducible, cached interpretation layer in
-four steps.
+feature universe. It produces a cached interpretation layer in four steps.
 
 ## 1. Edge master and classification
 
@@ -48,8 +47,7 @@ A module is retained only if it satisfies all configured criteria:
 - mean within-module co-assignment at least `--min-module-stability`.
 
 The seed, every run seed, resolution, modularity, module count, node stability,
-and module stability are written to output. These diagnostics should accompany
-reported modules.
+and module stability are written with the module outputs.
 
 ## 4. Enrichment
 
